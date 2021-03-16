@@ -46,6 +46,27 @@ double evaluateSolution(unordered_set<int> &solution, vector<vector<double> > &m
 
 /******************* Local Search ********************/
 
+// Más lejano a los seleccionados (de los que quedan por elegir)
+int farthestToSel(unordered_set<int> &non_selected, unordered_set<int> &selected, vector<vector<double> > &mat) {
+  int farthest;
+  double max_sum_dist, current_sum_dist;
+  unordered_set<int>::iterator it;
+
+  it = non_selected.begin();
+  farthest = *it;
+  max_sum_dist = singleContribution(selected, mat, farthest);
+
+  for ( ; it!=non_selected.end(); it++) {
+    current_sum_dist = singleContribution(selected, mat, *it); // Suma distancias del elemento a los seleccionados
+    if (current_sum_dist > max_sum_dist) { // Si la suma es mayor, lo reemplaza
+      max_sum_dist = current_sum_dist;
+      farthest = *it;
+    }
+  }
+
+  return farthest;
+}
+
 // Genera solución aleatoria
 unordered_set<int> randomSol(unsigned m, unsigned n, unordered_set<int> &complement){
 
@@ -102,50 +123,40 @@ void localSearch(vector<vector<double> > &mat, unsigned m) {
   clock_t t_start, t_total;
   t_start = clock();
 
-  unordered_set<int> complement; // Elementos no seleccionados
-  unordered_set<int> solution = randomSol(m,mat.size(), complement);
+  unordered_set<int> non_selected; // Elementos no seleccionados
+  unordered_set<int> solution = randomSol(m,mat.size(), non_selected);
   double diversity=evaluateSolution(solution, mat);
 
-  // Pasamos los no seleccionados a un vector
-  vector<int> non_selected;
-  non_selected.insert(non_selected.end(),complement.begin(),complement.end());
-
   vector<int>::iterator it; // Para iterar sobre los candidatos
-  int lowest, candidate;
+  int lowest, best_candidate;
   double contrib, min_contrib;
 
   bool carryon = true;
-  while (carryon){
+  while (carryon && CALLS < LIMIT){
     carryon=false;
     lowest=lowestContributor(solution, mat, min_contrib); // Menor contribuyente
     solution.erase(lowest); // Lo elimino
 
-    // Barajo los candidatos
-    random_shuffle(non_selected.begin(), non_selected.end(), rndGen);
+    best_candidate = farthestToSel(non_selected, solution,mat); // Candidato más lejano a los seleccionados
+    CALLS+=non_selected.size(); // Elije la mejor entre todas estas soluciones
+    contrib = singleContribution(solution, mat, best_candidate);
 
-    for(it=non_selected.begin(); !carryon && it!=non_selected.end() && CALLS<LIMIT; it++){
-      candidate= *it;
-      contrib = singleContribution(solution, mat, candidate); // Contribución del candidato
-      CALLS++; // He evaluado una nueva solución (factorizada)
-
-
-      if (contrib > min_contrib){ // Si encuentra una mejor en el entorno, se actualiza y continúa
+    if (contrib > min_contrib){ // Si encuentra una mejor en el entorno, se actualiza y continúa
         diversity = diversity + contrib - min_contrib; // Modificamos diversidad (sólo el factor que cambia)
         carryon=true;
-        solution.insert(candidate); // Insertamos el candidato
-        non_selected.erase(it); // Lo borramos de la lista de candidatos
-        non_selected.push_back(lowest); // Ahora el menor contribuyente es un candidato más
-      }
-    } // Si se sale del for pero no del while es porque se ha actualizado
-  } // Si se sale del for y tb del while es por una de las condiciones de finalización
+        solution.insert(best_candidate); // Insertamos el candidato
+        non_selected.erase(best_candidate); // Lo borramos de la lista de candidatos
+        non_selected.insert(lowest); // Ahora el menor contribuyente es un candidato más
+    } 
+  }
   /*
   if (solution.size() < m) 
     solution.insert(lowest); // Si no se encontró uno mejor, recuperamos la solución
-    */
+  */
 
   t_total = clock() - t_start;
   // output: Diversidad - Tiempo
-  cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << endl; // "\t" << CALLS << endl;
+  cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << "\t" << CALLS << endl;
 }
 
 /******************* MAIN **********************/

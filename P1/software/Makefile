@@ -10,14 +10,23 @@ OPT=-Wall -O2
 # Nombre de la práctica
 PRJ=practica1
 
-all: $(BIN)/greedy $(BIN)/localSearch
+all: $(BIN)/greedy $(BIN)/localSearch $(BIN)/localSearch2 $(BIN)/localSearchEvol $(BIN)/localSearch2Evol
 
 # Compilamos
 $(BIN)/greedy : $(SRC)/greedy.cpp
-		g++ $(OPT) $^ -o $@
+	g++ $(OPT) $^ -o $@
 
 $(BIN)/localSearch : $(SRC)/localSearch.cpp
 	g++ $(OPT) $^ -o $@
+
+$(BIN)/localSearch2 : $(SRC)/localSearch2.cpp
+	g++ $(OPT) $^ -o $@
+
+$(BIN)/localSearchEvol : $(SRC)/localSearchEvol.cpp
+	g++ $(OPT) $^ -o $@	
+
+$(BIN)/localSearch2Evol : $(SRC)/localSearch2Evol.cpp
+	g++ $(OPT) $^ -o $@	
 
 clean:
 	rm -f $(BIN)/*

@@ -4,6 +4,7 @@
 #include <stdlib.h>     // srand y rand
 #include <algorithm>    // advance
 #include <time.h>
+#include <fstream>
 
 using namespace std;
 
@@ -99,12 +100,11 @@ int rndGen (int i) { return rand()%i;}
 
 void localSearch(vector<vector<double> > &mat, unsigned m) {
 
-  clock_t t_start, t_total;
-  t_start = clock();
-
   unordered_set<int> complement; // Elementos no seleccionados
   unordered_set<int> solution = randomSol(m,mat.size(), complement);
   double diversity=evaluateSolution(solution, mat);
+
+  cout << diversity << ", ";
 
   // Pasamos los no seleccionados a un vector
   vector<int> non_selected;
@@ -128,24 +128,18 @@ void localSearch(vector<vector<double> > &mat, unsigned m) {
       contrib = singleContribution(solution, mat, candidate); // Contribución del candidato
       CALLS++; // He evaluado una nueva solución (factorizada)
 
-
-      if (contrib > min_contrib){ // Si encuentra una mejor en el entorno, se actualiza y continúa
+      if (contrib > min_contrib){ // Si encuentro una mejor en el entorno, se actualiza y continúo
         diversity = diversity + contrib - min_contrib; // Modificamos diversidad (sólo el factor que cambia)
         carryon=true;
         solution.insert(candidate); // Insertamos el candidato
         non_selected.erase(it); // Lo borramos de la lista de candidatos
         non_selected.push_back(lowest); // Ahora el menor contribuyente es un candidato más
+        cout << diversity << ", "; // Cada vez que actualiza, imprime la diversidad
       }
     } // Si se sale del for pero no del while es porque se ha actualizado
   } // Si se sale del for y tb del while es por una de las condiciones de finalización
-  /*
-  if (solution.size() < m) 
-    solution.insert(lowest); // Si no se encontró uno mejor, recuperamos la solución
-    */
 
-  t_total = clock() - t_start;
-  // output: Diversidad - Tiempo
-  cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << endl; // "\t" << CALLS << endl;
+  cout << endl; 
 }
 
 /******************* MAIN **********************/
@@ -160,6 +154,8 @@ int main( int argc, char *argv[] ) {
 
   cout << fixed;
   srand(stoi(argv[1])); // SEED as parameter
+
+  ofstream outfile;
 
   localSearch(mat, m);
 }
