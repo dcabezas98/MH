@@ -145,7 +145,7 @@ void localSearch(vector<vector<double> > &mat, unsigned m) {
 
   t_total = clock() - t_start;
   // output: Diversidad - Tiempo
-  cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << endl; // "\t" << CALLS << endl;
+  cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << "\t" << CALLS << endl;
 }
 
 /******************* MAIN **********************/
