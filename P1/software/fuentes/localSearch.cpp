@@ -128,7 +128,6 @@ void localSearch(vector<vector<double> > &mat, unsigned m) {
       contrib = singleContribution(solution, mat, candidate); // Contribución del candidato
       CALLS++; // He evaluado una nueva solución (factorizada)
 
-
       if (contrib > min_contrib){ // Si encuentra una mejor en el entorno, se actualiza y continúa
         diversity = diversity + contrib - min_contrib; // Modificamos diversidad (sólo el factor que cambia)
         carryon=true;

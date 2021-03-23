@@ -1,0 +1,375 @@
+\documentclass{article}
+
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry} 
+
+\usepackage[utf8]{inputenc}   % otra alternativa para los caracteres acentuados y la "Ã±"
+\usepackage[           spanish % para poder usar el espaÃ±ol
+                      ,es-tabla % para los captions de las tablas
+                       ]{babel}   
+\decimalpoint %para usar el punto decimal en vez de coma para los nÃºmeros con decimales
+
+%\usepackage{beton}
+%\usepackage[T1]{fontenc}
+
+\usepackage{parskip}
+\usepackage{xcolor}
+
+\usepackage{caption}
+
+\usepackage{enumerate} % paquete para poder personalizar fÃ¡cilmente la apariencia de las listas enumerativas
+
+\usepackage{graphicx} % figuras
+\usepackage{subfigure} % subfiguras
+
+\usepackage{amsfonts}
+\usepackage{amsmath}
+
+\usepackage{listings}
+\lstset
+{ %Formatting for code in appendix
+    language=python,
+    basicstyle=\footnotesize,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=1,
+    breaklines=true,
+    breakatwhitespace=false,
+}
+
+\definecolor{gris}{RGB}{220,220,220}
+	
+\usepackage{float} % para controlar la situaciÃ³n de los entornos flotantes
+
+\restylefloat{figure}
+\restylefloat{table} 
+\setlength{\parindent}{0mm}
+
+
+\usepackage[bookmarks=true,
+            bookmarksnumbered=false, % true means bookmarks in 
+                                     % left window are numbered
+            bookmarksopen=false,     % true means only level 1
+                                     % are displayed.
+            colorlinks=true,
+            allcolors=blue,
+            urlcolor=blue]{hyperref}
+\definecolor{webblue}{rgb}{0, 0, 0.5}  % less intense blue
+
+\usepackage[ruled,vlined]{algorithm2e}
+\SetKwInOut{Parameter}{parameter}
+
+
+\title{\Huge Metaheurísticas: Práctica 1 \\ Búsqueda Local y Algoritmos Greedy para el Problema de la Máxima Diversidad \vspace{10mm}}
+
+\author{\huge David Cabezas Berrido \vspace{10mm} \\
+	\huge 20079906D \vspace{10mm} \\  
+  \huge Grupo 2: Viernes \vspace{10mm} \\ 
+  \huge dxabezas@correo.ugr.es \vspace{10mm}}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Descripción y formulación del problema}
+
+Nos enfrentamos al \textbf{Problema de la Máxima Diversidad} (\textbf{Maximum Diversity Problem, MDP}). El problema consiste en seleccionar
+un subconjunto $m$ elementos de un conjunto de $n>m$ elementos de forma que se \textbf{maximice} la \emph{diversidad} entre los
+ elementos escogidos.
+ 
+ Disponemos de una matriz $D=(d_{ij})$ de dimensión $n\times n$ que contiene las distancias entre los elementos, la entrada $(i,j)$ contiene el
+ valor $d_{ij}$, que corresponde a la distancia entre el elemento $i$-ésimo y el $j$-ésimo. Obviamente, la matriz $D$ es simétrica y con
+ diagonal nula.
+ 
+ Existen distintas formas de medir la diversidad, que originan distintas variantes del problema. En nuestro caso, la diversidad será la suma
+ de las distancias entre cada par de elementos seleccionados.
+
+De manera formal, se puede formular el problema de la siguiente forma:
+
+\begin{description}
+	\item Maximizar 
+	\begin{equation} \label{eq:objetivo}
+		f(x)=\sum_{i=1}^{n-1}\sum_{j=i+1}^n d_{ij} x_i x_j
+	\end{equation}
+	\item sujeto a 
+	\begin{align*}
+		\sum_{i=1}^n x_i &= m \\
+		x_i&= \{0,1\}, \quad\forall i=1,\ldots, n.
+	\end{align*}
+\end{description}
+
+Una solución al problema es un vector binario $x$ que indica qué elementos son seleccionados, seleccionamos el elemento $i$-ésimo si $x_i=1$.
+
+Sin embargo, esta formulación es poco eficiente y para la mayoría de algoritmos proporcionaremos otra equivalente pero más eficiente.
+
+El problema es \textbf{NP-completo} y el tamaño del espacio de soluciones es $\dbinom{n}{m}$, de modo que es conveniente recurrir al uso de metaheurísticas
+para atacarlo.
+
+\pagebreak
+
+\section{Aplicación de los algoritmos}
+
+Los algoritmos para resolver este problema tendrán como entradas la matriz $D$ ($n\times n$) y el valor $m$. La salida será un contenedor
+(vector, conjunto, \ldots) con los índices de los elementos seleccionados, y no un vector binario como el que utilizamos para la formulación. En nuestro caso utilizaremos conjuntos para representar soluciones.
+
+Para representar las soluciones, usaremos conjuntos de enteros con los elementos seleccionados. La evaluación de la calidad de una solución se hará
+sumando la contribución de cada uno de los elementos, y dividiremos la evaluaciónen dos funciones. En lugar de calcular la función evaluación como en
+\eqref{eq:objetivo}, lo haremos así:
+\begin{equation} \label{eq:objetivo-fact}
+f(x)=\frac{1}{2}\sum_{i=1}^{m}\sum_{j=1}^m d(i,j)=\frac{1}{2}\sum_{i=1}^{m}\operatorname{contrib}(i)
+\end{equation}
+La diferencia es que contamos la distancia entre cada dos elementos $i,j$ dos veces, distancia del elemento $i$-ésimo al $j$-ésimo y del $j$-ésimo al
+$i$-ésimo. Esto es obviamente más lento que con $j>i$ en la sumatoria, pero nos permite factorizar la evaluación de la solución como suma de las
+ contribuciones de los elementos, lo cuál será útil para reaprovechar cálculos al evaluar soluciones para la Búsqueda Local.
+ Además, representar la solución como un vector de $m$ índices y no un vector binario de longitud $n$ presenta una clara ventaja: las sumatorias van hasta
+ $m$ en lugar de $n$. No tenemos que computar distancias para luego multiplicarlas por cero como sugería la formulación en \eqref{eq:objetivo}.
+
+Presentamos el pseudocódigo de la función para calcular la contribución de un elemento $x_i$.
+\begin{algorithm}
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un conjunto de índices $S$.}
+	\KwIn{La matriz de distancias $D$.}
+	\KwIn{Un entero $e$ correspondiente al índice del elemento.}
+	\KwOut{La contribución del elemento $e$, como se describe en \eqref{eq:objetivo-fact}.}
+	$contrib \gets 0$\;
+	\For{$s$ \textbf{in} $S$} {
+		$contrib \gets contrib + D[e,s]$ \tcp*{Sumo las distancias del elemento $e$ a cada elemento de $S$}
+	}
+	\Return{$contrib$}\;
+	\caption{{\sc contrib} calcula la contribución de un elemento en una solución.}
+	\label{alg:contrib}
+\end{algorithm}
+
+Nótese que el elemento $e$ no tiene que pertenecer al conjunto $S$. Esto obviamente no ocurrirá cuando se vaya a evaluar una solución
+al completo invocando esta función con la que describiremos a continuación. Pero, de esta forma, permite conocer cómo influirá en la evaluación el añadir
+ un nuevo elemento sin necesidad de añadirlo realmente. 
+ 
+ Ahora presentamos el pseudocódigo de la función para evaluar una solución completa.
+ \begin{algorithm}
+ 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+ 	\KwIn{Un conjunto de índices $S$.}
+ 	\KwIn{La matriz de distancias $D$.}
+ 	\KwOut{El valor de la función objetivo sobre la solución compuesta por $S$, como se describe en \eqref{eq:objetivo-fact}.}
+ 	$fitness \gets 0$\;
+ 	\For{$e$ \textbf{in} $S$} {
+ 		$fitness \gets fitness + \operatorname{contrib}(S,D,e)$ \tcp*{Sumo la contribución de cada elemento de la solución}
+ 	}
+ 	\Return{$fitness/2$} \tcp*{Hemos contado cada distancia dos veces} 
+ 	\caption{{\sc fitness} calcula la evaluación de una solución.}
+ 	\label{alg:eval}
+ \end{algorithm}
+
+Podemos definir la distancia de un elemento $e$ a un conjunto $S$ como:
+
+\begin{equation} \label{eq:distance-elem-set}
+	d(e,S)=\sum_{s\in S} d(e,s)
+\end{equation}
+
+Esta expresión nos será de utilidad para la implementación de los algoritmos.
+
+Gracias a la existencia del Algoritmo \ref{alg:contrib}, podemos obtener esta expresión como $\operatorname{contrib}(S,D,e)$.
+
+\pagebreak
+
+\section{Descripción de los algoritmos}
+
+\subsection{Búsqueda local}
+
+Procedemos con la descripción del algoritmo de Búsqueda Local que se nos ha presentado en el seminario. 
+Este algoritmo utiliza la técnica del Primer Mejor, en la que se van generando soluciones en el entorno de la actual y se
+salta a la primera con mejor evaluación. Para la implementación del algoritmo, necesitamos distintos elementos.
+
+El primer elemento, es una función para generar una solución aleatoria de partida. Simplemente se eligen $m$ elementos 
+diferentes del conjunto. Por comodidad, también calculamos el complementario.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{El entero $m$.}
+	\KwIn{El entero $n$.}
+	\KwOut{Una solución válida del MDP obtenida aleatoriamente.}
+	\KwOut{El complementario de la solución obtenida.}
+	$E \gets \{0,\ldots, n-1\}$ \tcp*{Conjunto con los elementos no seleccionados}
+	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
+	\While{$|S|<m$}{
+		$e \gets$ elemento aleatorio de $E$\;
+		$E \gets E\backslash \{e\}$\;
+		$S \gets S\cup \{e\}$\;
+	}
+	\Return{$S$}\;
+	\Return{$E$} \tcp*{El complementario}
+	\caption{{\sc RandomSol} proporciona una solución válida aleatoria}
+	\label{alg:randomsol}
+\end{algorithm}
+
+Lo siguiente que necesitamos es un método para generar las soluciones del entorno. Estas soluciones se consiguen sustituyendo
+el menor contribuyente de la solución actual por otro candidato. Presentamos el código para obtener el menor contribuyente.
+
+ \begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un conjunto de elementos $S$.}
+	\KwIn{La matriz de distancias $D$.}
+	\KwOut{El elemento de $S$ que minimiza $\operatorname{contrib}(S,S,e)$ con $e\in S$.}
+	\KwOut{Su contribución, para la factorización de la función objetivo.}
+	$lowest \gets \text{primer elemento de } S$\;
+	$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$\;
+	\For{$s$ \textbf{in} $S$} {
+		$contrib \gets \operatorname{contrib}(S,D,s)$\;
+		\If{$contrib < min\_contrib$} { 
+			$min\_contrib \gets contrib$\;
+			$lowest \gets s$ \tcp*{Si encuentro un candidato con menor contribución, actualizo}
+		}
+	}
+	\Return{$lowest$}\;
+	\Return{$min\_contrib$}\;
+	\caption{{\sc lowestContrib} obtiene el elemento de $S$ que menos contribuye en la valoración.}
+	\label{alg:lowest-contributor}
+\end{algorithm}
+
+En el caso de que $S$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
+esto no es relevante, ya que vale cualquier elemento de $S$.
+
+Finalmente, proporcionamos el algoritmo de Búsqueda Local para actualizar la solución por otra del entorno iterativamente
+hasta encontrar un máximo local (una solución mejor que todas las de su entorno) ollegar a un límite de evaluaciones de la función
+ objetivo: $LIMIT=100000$. Las soluciones del entorno se generan aleatoriamente.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{El entero $m$.}
+	\KwIn{La matriz de distancias $D$, $n\times n$.}
+	\KwOut{Una solución válida del MDP por el algoritmo de BS que hemos descrito, junto con su evaluación.}
+	$S \gets \operatorname{randomSol}(m,n)$ \tcp*{Comenzamos con una solución aleatoria}
+	$E \gets \{0,\ldots,n-1\}\backslash S$ \tcp*{$\operatorname{randomSol}$ también devuelve el complementario}
+	$fitness \gets \operatorname{fitness}(S)$ \tcp*{Diversidad de la solución}
+	$E \gets \operatorname{vector}(E)$ \tcp*{No importa el orden, pero debe poder barajarse}
+	$carryon \gets true$\;
+	$LIMIT \gets 100000$ \tcp*{Límite de llamadas a la función de evaluación}
+	$CALLS \gets 0$\;
+	\While{carryon}{
+		$lowest = \operatorname{lowestContributor}(S,D)$\;
+		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$ \tcp*{Se calcula dentro de $\operatorname{lowestContributor}$}
+		$S \gets S\backslash\{lowest\}$\;
+		$E \gets \operatorname{shuffle}(E)$\;	
+		\For{$e$ \textbf{in} $E$} {
+			$contrib \gets \operatorname{contrib}(S,D,e)$\;
+			$CALLS \gets CALLS +1$ \tcp*{He evaludado una posible solución}
+			\If{$contrib > min\_contrib$} { 
+				$fitness \gets fitness + contrib - min\_contrib$ \tcp*{Diversidad de la nueva solución}
+				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
+				$S\gets S\cup\{e\}$ \tcp*{Saltamos a la nueva solución}
+				$E \gets E\backslash\{e\}$\;
+				$E \gets E\cup\{lowest\}$\;
+			}
+			\If{$carryon==true$ or $CALLS\geq LIMIT$} { 
+				\textbf{break}  \tcp*{Se cumple alguna de las condiciones de parada}
+			}
+		}
+	}
+	\If{$|S|<m$} { 
+		$S\gets S\cup\{lowest\}$ \tcp*{Si salimos porque no encontramos una mejor, recuperamos la solución}
+	}
+	\Return{$S$}\;
+	\Return{$fitness$}\;
+	\caption{{\sc LocalSearch}}
+	\label{alg:local-search}
+\end{algorithm}
+
+Cabe destacar que a diferencia del algoritmo Greedy (Algoritmo \ref{alg:greedy}) en el que se evalúa la solución al final,
+en este algoritmo se calcula factorizando. Esto acelera mucho los cálculos, ya que hay que evaluar muchas soluciones diferentes.
+
+\pagebreak
+
+\section{Algoritmo de comparación: Greedy}
+
+Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy} descrito en el seminario.
+
+El algoritmo consiste en empezar por el elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución
+válida.
+
+Como elemento más lejano al resto se toma el elemento cuya suma de las distancias al resto sea la mayor. Y en cada iteración se introduce el elemento
+cuya suma de las distancias a los seleccionados sea mayor. Es decir, utilizamos la definición de \eqref{eq:distance-elem-set}.
+
+Para calcular ambos valores, usamos la siguiente función, que permite obtener el de entre
+un conjunto de candidatos más lejano (en el sentido que acabamos de comentar) a los elementos de un conjunto dado.
+El código para calcularlo es similar al del algoritmo \ref{alg:lowest-contributor}.
+
+ \begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un conjunto de candidatos $C$.}
+	\KwIn{Un conjunto de elementos $S$.}
+	\KwIn{La matriz de distancias $D$.}
+	\KwOut{El candidato más lejano en el sentido de \eqref{eq:distance-elem-set}.}
+	$farthest \gets \text{primer elemento de } C$\;
+	$max\_contrib \gets \operatorname{contrib}(S,D,farthest)$\;
+	\For{$e$ \textbf{in} $C$} {
+		$contrib \gets \operatorname{contrib}(S,D,e)$\;
+		\If{$contrib > max\_contrib$} { 
+			$max\_contrib \gets contrib$\;
+			$farthest \gets e$ \tcp*{Si encuentro un candidato con mayor contribución, actualizo}
+		}
+	}
+	\Return{$farthest$}\;
+	\caption{{\sc farthest} obtiene el candidato más lejano a los elementos de $S$.}
+	\label{alg:farthest-candidate-set}
+\end{algorithm}
+
+En el caso de que $C$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
+esto no es relevante, ya que vale cualquier elemento de $C$.
+
+Ya estamos en condiciones de proporcionar una descripción del algoritmo Greedy.
+
+ \begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{La matriz de distancias $D$.}
+	\KwIn{El entero $m$.}
+	\KwOut{Una solución válida del MDP obtenida como hemos descrito anteriormente, y su diversidad.}
+	$C \gets \{0,\ldots, n-1\}$ \tcp*{En principio los $n$ elementos son candidatos}
+	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
+	$farthest \gets \operatorname{farthest}(C,C,D)$ \tcp*{Elemento más lejano al resto}
+	$C \gets C\backslash \{farthest\}$\;
+	$S \gets S\cup \{farthest\}$\;
+	\While{$|S|<m$}{
+		$farthest \gets \operatorname{farthest}(C,S,D)$ \tcp*{Elemento más lejano a los seleccionados}
+		$C \gets C\backslash \{farthest\}$\;
+		$S \gets S\cup \{farthest\}$\;
+	}
+	\Return{$S$}\;
+	\Return{$\operatorname{fitness}(S)$}\;
+	\caption{{\sc Greedy}}
+	\label{alg:greedy}
+\end{algorithm}
+
+\pagebreak
+
+\section{Desarrollo de la práctica}
+
+La implementación de los algoritmos y la experimentación con los mismos se ha llevado acabo de C++, utilizando la librería STL. 
+Para representar la soluciones hemos hecho uso del tipo \texttt{unordered\_set}, ya que se realizan pocas operaciones de consulta y
+muchas de inserción y borrado.
+
+Para medir los tiempos de ejecución se utiliza la función \texttt{clock} de la librería \texttt{time.h}.
+
+A lo largo de la práctica se utilizan acciones aleatorias. Utilizamos la librería \texttt{stdlib.h} para la generación de
+números pseudoaleatorios con \texttt{rand} y fijamos la semilla con \texttt{srand}. También se baraja el vector de candidatos
+en la búsqueda local con la función \texttt{random\_shuffle} de la librería \texttt{algorithm}.
+
+Se almacena la matriz de distancias completa (no sólo un triángulo) por comodidad de los cálculos.
+
+TODO ¿pequeño manual de usuario? ¿puede ser el LEEME?
+
+\pagebreak
+
+\section{Experimentación y análisis}
+
+Toda la experimentación se realiza en mi ordenador portátil personal, que tiene las siguientes especificaciones:
+\begin{itemize}
+	\item OS: Ubuntu 20.04.2 LTS x86\_64.
+	\item RAM: 8GB, DDR4.
+	\item CPU: Intel Core i7-6700HQ, 2.60Hz.
+\end{itemize}
+
+\section{Trabajo voluntario}
+
+\subsection{Comparación Búsqueda Local: Mejor vs Primer Mejor}
+
+\end{document}
