@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Fichero que automatiza las ejecuciones de los algoritmos
+
 # Greedy
 
 #echo "" > salidas/greedy.txt
