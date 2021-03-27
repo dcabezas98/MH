@@ -612,6 +612,10 @@ El algoritmo Greedy, en media, alcanza el 98.37\% de la diversidad de la mejor s
    encontrar un candidato mejor que el peor de los seleccionados, aunque se evalúan soluciones completas.
    En el algoritmo Greedy se evalúa la solución completa al final.
    
+   Otra fracción muy importante del tiempo de cómputo de Búsqueda Local se invierte también en barajar el vector de candidatos,
+   que son $n-m$, para explorar los entornos de las soluciones de forma aleatoria. Hay que barajar por cada actualización de la
+   solución.
+   
    El motivo por que el la Búsqueda Local sea mucho más rápida es la factorización de la función de evaluación. Aunque técnicamente
    estemos evaluando nuevas soluciones completas, ya conocemos la contribución de todos los candidatos menos el posible nuevo
    seleccionado. Esto hace que el cálculo sea equivalente al de probar un nuevo candidato de Greedy.
@@ -685,7 +689,7 @@ Es del orden de unas 100 para los ejemplos de MDG-a, 500-600 para los de MDG-b y
 tener en cuenta que la estrategia del Primer Mejor da lugar a una gran cantidad de actualizaciones, con pequeña mejoría de
 una actualización a la siguiente.
 
-En los ejes de abscisas se observa la mejora de diversidad que consigue el algoritmo partiendo de la solución aleatoria. Esta mejora ronda el 
+En los ejes de ordenadas se observa la mejora de diversidad que consigue el algoritmo partiendo de la solución aleatoria. Esta mejora ronda el 
 20-25\% para los ejemplos del grupo MDG-a, es entorno al 12\% para los ejemplos del grupo MDG-b, y de ligeramente menos del 10\%
 para los del grupo MDG-c. Esto le resta importancia al hecho de que los algoritmos hayan conseguido desviaciones más bajas en los
 ejemplos grandes, pues una solución aleatoria también presenta menos desviación en los ejemplos grandes que en los pequeños.
@@ -696,11 +700,23 @@ ejemplos grandes, pues una solución aleatoria también presenta menos desviaci�
 
 \subsection{Comparación Búsqueda Local: Mejor vs Primer Mejor}
 
-TODO: Utilizamos la misma semilla para cada caso ...
+En el seminario se nos ha aconsejado la estrategia del Primer Mejor para la Búsqueda Local, que consiste en actualizar una
+solución cuando se encuentra una mejor en su entorno. La comparamos con la estrategia del Mejor, que explora todo el entorno
+de cada solución y salta a la mejor solución del entorno.
+
+A priori, tenemos una ventaja y dos inconvenientes. Por una parte, saltar a la mejor solución posible del entorno hace que el
+valor de la función de evaluación crezca más rápido, lo que conlleva tener que realizar menos actualizaciones y menos barajamientos
+del vector de no seleccionados.
+
+Por otra parte, exploramos una menor porción del espacio de soluciones y corremos un alto riesgo de atascarnos en el máximo local
+más cercano. También tenemos que evaluar todos los posibles candidatos para cada actualización.
+
+Para este algoritmo, utilizamos la misma semilla en cada caso de estudio que usábamos en el algoritmo de BL con Primer Mejor.
 
 Coste y estadísticos obtenidos en cada caso por este algoritmo.
 
 \begin{table}[H]
+	
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
@@ -742,18 +758,18 @@ Coste y estadísticos obtenidos en cada caso por este algoritmo.
 	\label{tab:bs-mejor}
 \end{table}
 
-Media de los estadísticos:
-\begin{table}[H]
-	\centering
-	\begin{tabular}{|cc|}
-		\hline
-		Desv & Tiempo (s)\\ \hline
-		4.41 & 0.24 \\
-		\hline
-	\end{tabular}
-\end{table}
+%Media de los estadísticos:
+%\begin{table}[H]
+%	\centering
+%	\begin{tabular}{|cc|}
+%		\hline
+%		Desv & Tiempo (s)\\ \hline
+%		4.41 & 0.24 \\
+%		\hline
+%	\end{tabular}
+%\end{table}
 
-TODO: COMparativa con Bs
+Comparativa de los estadísticos medios con la estrategia del Primer Mejor:
 
 \begin{table}[H]
 	\centering
@@ -768,9 +784,13 @@ TODO: COMparativa con Bs
 	\label{tab:comparativa-bs}
 \end{table}
 
-TODO: gráficas de convergencia
+Observamos en las dos tablas anteriores que la estrategia del Mejor da lugar a una desviación mucho mayor que la del Primer Mejor,
+probablemente porque se quede atascado en el máximo local más cercano. Además, a diferencia de Primer Mejor y Greedy, este algoritmo
+obtiene mayor desviación en los ejemplos grandes, donde las soluciones aleatorias ya eran mejores. Por tanto la eficacia de este
+algoritmo es bastante baja en comparación con los que hemos visto antes, posiblemente debido a una exploración en menor profundidad
+del espacio de búsqueda cuyos inconvenientes se acentúan al ser este mayor.
 
-
+Incorporamos ahora gráficas de convergencia de este algoritmo.
 
 \begin{figure}[H]
 	\centering
@@ -820,5 +840,83 @@ TODO: gráficas de convergencia
 	\label{fig:graph-bl-best-c}
 \end{figure}
 
+En los ejemplos del grupo MDG-a, la forma de las gráficas es similar a las que proporcionaba la estrategia del Primer Mejor, y 
+la mejor también es similar. También es similar la mejora que consigue (eje de ordenadas) con respecto a la solución aleatoria.
+
+En cambio, en los ejemplos de los grupos MDG-b y MDG-c, el crecimiento del valor de la función exponencial es prácticamente lineal,
+sobre todo en los ejemplos más grandes. Además, en el eje de ordenadas observamos que la mejora que consigue este algoritmo en 
+estos ejemplos respecto a la solución aleatoria es mucho menor, en los ejemplos grandes no llega al 2\% de la diversidad.
+
+En el eje de abscisas, observamos que el número de actualizaciones del algoritmo BL con primer mejor es de entorno a 50,
+independientemente del tamaño del problema. Esto podría significar que el algoritmo para antes de tiempo y no llega a explorar
+el espacio de soluciones todo lo que podría, así que obtenemos una tabla con las llamadas a la función de evaluación de cada
+estrategia.
+
+La estrategia del Primer Mejor es capaz de parar en mitad de una iteración si se llega al límite de llamadas, mientras que la 
+estrategia del Mejor la he diseñado para que se detenga al final de la iteración. Por este motivo, el algoritmo del Mejor puede
+exceder el límite de llamadas, pero nunca en más de $n$, De modo que no tiene mucha importancia de cara a los tiempos de ejecución
+y al comportamiento del algoritmo.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|ccc|}
+		\hline
+		Caso & Primer Mejor & Mejor\\ \hline
+		MDG-a\_10\_n500\_m50 & 4933 & 22500\\
+		MDG-a\_1\_n500\_m50 & 3533 & 19800\\
+		MDG-a\_2\_n500\_m50 & 2664 & 22050\\
+		MDG-a\_3\_n500\_m50 & 1522 & 22050\\
+		MDG-a\_4\_n500\_m50 & 1843 & 24300\\
+		MDG-a\_5\_n500\_m50 & 1869 & 16200\\
+		MDG-a\_6\_n500\_m50 & 2330 & 16650\\
+		MDG-a\_7\_n500\_m50 & 2776 & 22950\\
+		MDG-a\_8\_n500\_m50 & 3439 & 17100\\
+		MDG-a\_9\_n500\_m50 & 2246 & 20700\\
+		MDG-b\_21\_n2000\_m200 & 29153 & 100800\\
+		MDG-b\_22\_n2000\_m200 & 23745 & 100800\\
+		MDG-b\_23\_n2000\_m200 & 28631 & 100800\\
+		MDG-b\_24\_n2000\_m200 & 30061 & 100800\\
+		MDG-b\_25\_n2000\_m200 & 22374 & 100800\\
+		MDG-b\_26\_n2000\_m200 & 40168 & 100800\\
+		MDG-b\_27\_n2000\_m200 & 31362 & 100800\\
+		MDG-b\_28\_n2000\_m200 & 15585 & 100800\\
+		MDG-b\_29\_n2000\_m200 & 25351 & 100800\\
+		MDG-b\_30\_n2000\_m200 & 19936 & 100800\\
+		MDG-c\_10\_n3000\_m400 & 34032 & 101400\\
+		MDG-c\_13\_n3000\_m500 & 27872 & 100000\\
+		MDG-c\_14\_n3000\_m500 & 47459 & 100000\\
+		MDG-c\_15\_n3000\_m500 & 79989 & 100000\\
+		MDG-c\_19\_n3000\_m600 & 34607 & 100800\\
+		MDG-c\_1\_n3000\_m300 & 58816 & 102600\\
+		MDG-c\_20\_n3000\_m600 & 44010 & 100800\\
+		MDG-c\_2\_n3000\_m300 & 63615 & 102600\\
+		MDG-c\_8\_n3000\_m400 & 60814 & 101400\\
+		MDG-c\_9\_n3000\_m400 & 51098 & 101400\\
+		\hline
+	\end{tabular}
+	\caption{Número de llamadas a la función de evaluación por las estrategias Mejor y Primer Mejor para cada ejemplo.}
+	\label{tab:calls}
+\end{table}
+
+Efectivamente, comprobamos que la estrategia del Primer Mejor siempre alcanza un máximo local. En cambio, la del Mejor
+invierte demasiadas evaluaciones en cada iteración de los ejemplos grandes, lo que provoca que pare antes de alcanzar uno.
+
+Por el contrario, el número de barajamientos de los candidatos que realiza la estrategia del Mejor es mucho menor, ya que
+actualiza la solución menos veces. Este algoritmo invierte prácticamente todo su tiempo de ejecución en llamadas a la función
+de evaluación.
+
+Tras observar esto, es probable que al quizar o aumentar el límite de llamadas a la función de evaluación, el la estrategia del 
+Mejor se asemeje en eficacia a la del Primer Mejor. No obstante, en los ejemplos del grupo MDG-a, donde ambos algoritmos se
+ ejecutan al completo, la desviación que logra
+la estrategia del Primer Mejor es ligeramente menor. Además, la mejor que realiza el algoritmo Primer Mejor respecto al tiempo que
+tarda sugiere que la estrategia Mejor necesitaría más tiempo para alcanzar soluciones de la misma calidad.
+
+Finalmente, hay que tener en cuenta que en otros problemas donde no sea posible la factorización de la función de evaluación,
+la estrategia del Mejor sería mucho más lenta que la del Primer Mejor. Debido a que la mayoría de su tiempo se dedida a evaluar
+esta función.
+
+Por tanto, concluimos que la estrategia del Mejor no parece ser tan mala como muestra la Tabla \ref{tab:comparativa-bs}, pero
+es más conveniente actualizar más a menudo la solución en lugar de realizar exhaustivas búsquedas por el entorno de cada solución,
+sobre todo si no se pudiese factorizar la función de evaluación.
 
 \end{document}
