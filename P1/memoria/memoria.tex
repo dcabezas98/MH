@@ -250,6 +250,7 @@ hasta encontrar un máximo local (una solución mejor que todas las de su entorn
 	$LIMIT \gets 100000$ \tcp*{Límite de llamadas a la función de evaluación}
 	$CALLS \gets 0$\;
 	\While{carryon}{
+		$carryon \gets false$\;
 		$lowest = \operatorname{lowestContributor}(S,D)$\;
 		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$ \tcp*{Se calcula dentro de $\operatorname{lowestContributor}$}
 		$S \gets S\backslash\{lowest\}$\;
@@ -285,10 +286,8 @@ en este algoritmo se calcula factorizando. Esto acelera mucho los cálculos, ya 
 
 \section{Algoritmo de comparación: Greedy}
 
-Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy} descrito en el seminario.
-
-El algoritmo consiste en empezar por el elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución
-válida.
+Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy}. El algoritmo consiste en empezar por el
+ elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución válida.
 
 Como elemento más lejano al resto se toma el elemento cuya suma de las distancias al resto sea la mayor. Y en cada iteración se introduce el elemento
 cuya suma de las distancias a los seleccionados sea mayor. Es decir, utilizamos la definición de \eqref{eq:distance-elem-set}.
@@ -369,6 +368,7 @@ Tenemos los siguientes ejecutables:
 	\item \textbf{Greedy:} Implementación del algoritmo Greedy.
 	\item \textbf{LocalSearch:} Implementación del algoritmo de Búsqueda Local (Primer Mejor).
 	\item \textbf{LocalSearch2:} Implementación del algoritmo de Búsqueda Local (Mejor).
+	\item \textbf{LocalSearch2nolim:} Implementación del algoritmo de Búsqueda Local (Mejor) sin límite de evaluaciones.
 \end{itemize}
 
 Todos ellos devuelven la evaluación de la solución obtenida y el tiempo de ejecución por salida estándar.
@@ -379,19 +379,20 @@ Ejemplo:
 	bin/greedy < datos/MDG-a_1_n500_m50.txt >> salidas/greedy.txt
 \end{verbatim}
 
-Los programas correspondientes a la búsqueda local, también devuelven el número de llamadas a la función de evaluación, para
+Los programas correspondientes a la búsqueda local también devuelven el número de llamadas a la función de evaluación, para
 comparar cómo de cerca se quedan del límite.
 
 Tenemos dos ejecutables más: \textbf{LocalSearchEvol} y \textbf{LocalSearch2Evol}, que son versiones equivalentes a
 \textbf{LocalSearch} y \textbf{LocalSearch2}, pero con la diferencia de que devuelven una lista con la fitness de la solución
 en cada iteración. Los usamos para estudiar la evolución de la solución a lo largo del proceso y obtener gráficas de convergencia.
 
-Además, todos los archivos de búsqueda locall reciben la semilla como parámetro. Ejemplo:
+Además, todos los archivos de búsqueda local reciben la semilla como parámetro. Ejemplo:
 \begin{verbatim}
 bin/localSearch 197 < datos/MDG-a_1_n500_m50.txt >> salidas/localSearch.txt
 \end{verbatim}
 
-En la carpeta \textbf{software} se incluye el script usado para lanzar todas las ejecuciones, \texttt{run.sh}.
+En la carpeta \textbf{software} se incluye el script usado para lanzar todas las ejecuciones, \texttt{run.sh}. También se incluye
+el \texttt{Makefile} que compila los ejecutables.
 
 \pagebreak
 
@@ -918,5 +919,55 @@ esta función.
 Por tanto, concluimos que la estrategia del Mejor no parece ser tan mala como muestra la Tabla \ref{tab:comparativa-bs}, pero
 es más conveniente actualizar más a menudo la solución en lugar de realizar exhaustivas búsquedas por el entorno de cada solución,
 sobre todo si no se pudiese factorizar la función de evaluación.
+
+Para corroborar nuestras conclusiones, y como los ejemplos que estudiamos no son demasiado grandes, probamos a lanzar la BL
+con Mejor eliminando el límite de llamadas a la función de evaluación. Obtenemos los siquientes resultados.
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|lrrr|}
+		\hline
+		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
+		MDG-a\_1\_n500\_m50 & 7605.85 & 2.91 & 0.001625\\
+		MDG-a\_2\_n500\_m50 & 7650.91 & 1.55 & 0.001816\\
+		MDG-a\_3\_n500\_m50 & 7627.05 & 1.71 & 0.001806\\
+		MDG-a\_4\_n500\_m50 & 7628.28 & 1.83 & 0.001896\\
+		MDG-a\_5\_n500\_m50 & 7443.78 & 4.02 & 0.001291\\
+		MDG-a\_6\_n500\_m50 & 7519.01 & 3.28 & 0.001317\\
+		MDG-a\_7\_n500\_m50 & 7602.72 & 2.17 & 0.001892\\
+		MDG-a\_8\_n500\_m50 & 7527.51 & 2.88 & 0.001354\\
+		MDG-a\_9\_n500\_m50 & 7605.79 & 2.11 & 0.001631\\
+		MDG-a\_10\_n500\_m50 & 7625.84 & 1.99 & 0.001932\\
+		MDG-b\_21\_n2000\_m200 & 11180058.750775 & 1.06 & 0.677438\\
+		MDG-b\_22\_n2000\_m200 & 11155314.466742 & 1.16 & 0.555748\\
+		MDG-b\_23\_n2000\_m200 & 11108124.604139 & 1.7 & 0.496808\\
+		MDG-b\_24\_n2000\_m200 & 11153820.029699 & 1.21 & 0.542795\\
+		MDG-b\_25\_n2000\_m200 & 11171185.53995 & 1.11 & 0.597482\\
+		MDG-b\_26\_n2000\_m200 & 11188729.123865 & 0.92 & 0.634261\\
+		MDG-b\_27\_n2000\_m200 & 11114584.701586 & 1.69 & 0.499422\\
+		MDG-b\_28\_n2000\_m200 & 11179532.969364 & 0.89 & 0.610616\\
+		MDG-b\_29\_n2000\_m200 & 11149615.9197 & 1.31 & 0.62679\\
+		MDG-b\_30\_n2000\_m200 & 11157311.470229 & 1.23 & 0.588087\\
+		MDG-c\_1\_n3000\_m300 & 24736454 & 0.59 & 3.828034\\
+		MDG-c\_2\_n3000\_m300 & 24675066 & 0.92 & 3.003777\\
+		MDG-c\_8\_n3000\_m400 & 43243999 & 0.44 & 5.740351\\
+		MDG-c\_9\_n3000\_m400 & 43163449 & 0.63 & 6.146966\\
+		MDG-c\_10\_n3000\_m400 & 42989641 & 1.12 & 4.425393\\
+		MDG-c\_13\_n3000\_m500 & 66766340 & 0.37 & 8.536604\\
+		MDG-c\_14\_n3000\_m500 & 66628488 & 0.52 & 7.471225\\
+		MDG-c\_15\_n3000\_m500 & 66715761 & 0.41 & 7.363534\\
+		MDG-c\_19\_n3000\_m600 & 95226472 & 0.43 & 9.204225\\
+		MDG-c\_20\_n3000\_m600 & 95271298 & 0.39 & 9.370968\\
+		\hline
+	\end{tabular}
+	\caption{Resultados y estadísticos obtenidos por el algoritmo de BL con Mejor eliminando el límite de llamadas.}
+\label{tab:ls2-nolim}
+\end{table}
+
+Las desviaciones son bastante similares a las obtenidas con la estrategia del Primer Mejor, en cambio los tiempos son mucho mayores.
+
+La desviación media es de 1.42\%, y el tiempo medio de 2.36 segundos. Aunque la desviación sea buena (mejor que Greedy, aunque
+ligeramente peor que la estrategia del Primer Mejor), el tiempo medio de ejecución es bastante mayor, más del triple que el de la
+estrategia Primer Mejor.
 
 \end{document}

@@ -26,3 +26,6 @@ Ejemplo:
 ```
 bin/localSearch 197 < datos/MDG-a_1_n500_m50.txt >> salidas/localSearch.txt
 ```
+
+En la carpeta `software` se incluye el script usado para lanzar todas las ejecuciones, `run.sh`. También se incluye
+el `Makefile` que compila los ejecutables.
