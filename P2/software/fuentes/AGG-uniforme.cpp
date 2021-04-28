@@ -79,18 +79,17 @@ class Solution {
       s[elem_out]=elem_in; // En la posición del que saco, pongo el que entra
     }
 
-    int greatestContributor(vector<vector<double> > &mat, double &max_contrib, bool from_out=false){
+    int greatestContributor(vector<vector<double> > &mat, bool from_out=false){
 
-      int greatest;
-      double current_contrib;
+      int greatest=-1;
+      double current_contrib, max_contrib;
 
       if(from_out){ // fuera de la solución
         max_contrib=0;
-        greatest = 0;
         for (unsigned i = 0; i < n; i++){
           if (find(s.begin(),s.end(),i)==s.end()) { // Si no está en la solución
             current_contrib = singleContribution(s, mat, i); // Suma distancias del elemento a los seleccionados
-            if (current_contrib < max_contrib) { // Si la suma es menor, lo reemplaza
+            if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
               max_contrib = current_contrib;
               greatest = i;
             }
@@ -105,7 +104,7 @@ class Solution {
         it++;
         for ( ; it!=s.end(); it++) {
           current_contrib = singleContribution(s, mat, *it); // Suma distancias del elemento a los seleccionados
-          if (current_contrib < max_contrib) { // Si la suma es menor, lo reemplaza
+          if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
             max_contrib = current_contrib;
             greatest = *it;
           }
@@ -117,14 +116,12 @@ class Solution {
 
     void repair(vector<vector<double> > &mat){
       while (s.size()>m){ // Sobran elementos, quito de la solución
-        double contrib;
-        int g = greatestContributor(mat, contrib);
+        int g = greatestContributor(mat);
         s.erase(find(s.begin(),s.end(),g));
       }
 
       while (s.size()<m){ // Faltan elementos, añado de fuera
-        double contrib;
-        int g = greatestContributor(mat, contrib, true);
+        int g = greatestContributor(mat, true);
         s.push_back(g);
       }
     }
@@ -267,8 +264,6 @@ void agg(vector<vector<double> > &mat, unsigned m) {
     population.evaluate(mat);
     EVALS+=m;
     population.replacement();
-
-    cout << population.v[population.bestSol()].fitness << endl;
   }
 
   t_total = clock() - t_start;
@@ -276,10 +271,6 @@ void agg(vector<vector<double> > &mat, unsigned m) {
   double diversity = population.v[population.bestSol()].fitness; // Fitness de la mejor solución
 
   cout << diversity << "\t" << (double) t_total / CLOCKS_PER_SEC << endl;
-
-  Solution bestSol = population.v[population.bestSol()];
-  cout << evaluateSolution(bestSol.s,mat) << endl;
-  cout << bestSol.s.size() << endl;
 }
 
 /******************* MAIN **********************/
