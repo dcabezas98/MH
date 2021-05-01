@@ -9,12 +9,14 @@ using namespace std;
 int EVALS=0; // Llamadas a evaluación
 const int LIMIT=100000; // Límite de evaluaciones
 
+const int CHROMOSOMES=50; // Nº cromosomas
+
 const float PROB_CROSS=0.7;
-const float PROB_MUT=0.1; // TODO: hay que partir por m
+float PROB_MUT=0.1; // Hay que partir por n (nº genes por cromosoma) luego
 
 /* Parámetros del problema, fijos durante toda la ejecución*/
-unsigned n=0;
-unsigned m=0;
+unsigned n=0; // Número de posibles elementos (número de genes)
+unsigned m=0; // Tam. soluciones (número de genes a 1)
 
 // random generator function:
 int rndGen (int i) { return rand()%i;}
@@ -79,50 +81,44 @@ class Solution {
       s[elem_out]=elem_in; // En la posición del que saco, pongo el que entra
     }
 
-    int greatestContributor(vector<vector<double> > &mat, bool from_out=false){
-
-      int greatest=-1;
-      double current_contrib, max_contrib;
-
-      if(from_out){ // fuera de la solución
-        max_contrib=0;
-        for (unsigned i = 0; i < n; i++){
-          if (find(s.begin(),s.end(),i)==s.end()) { // Si no está en la solución
-            current_contrib = singleContribution(s, mat, i); // Suma distancias del elemento a los seleccionados
-            if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
-              max_contrib = current_contrib;
-              greatest = i;
-            }
-          }
+    void removeGreatest(vector<vector<double> > &mat){ // Borra el mayor contribuyente de la solución
+      double current_contrib, max_contrib=0;
+      vector<int>::iterator it, it_g;
+      for (it=s.begin(); it!=s.end(); it++){
+        current_contrib = singleContribution(s, mat, *it); // Suma distancias del elemento a los seleccionados
+        if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
+          max_contrib = current_contrib;
+          it_g = it;
         }
+      }
 
-      } else { // dentro de la solución
-        vector<int>::iterator it;
-        it = s.begin();
-        greatest = *it;
-        max_contrib = singleContribution(s, mat, greatest);
-        it++;
-        for ( ; it!=s.end(); it++) {
-          current_contrib = singleContribution(s, mat, *it); // Suma distancias del elemento a los seleccionados
+      s.erase(it_g);
+    }
+
+    void addGreatest(vector<vector<double> > &mat){ // Añade el mayor contribuyente de fuera de la solución
+      int greatest=-1;
+      double current_contrib, max_contrib=0;
+
+      for (unsigned i = 0; i < n; i++){
+        if (find(s.begin(),s.end(),i)==s.end()) { // Si no está en la solución
+          current_contrib = singleContribution(s, mat, i); // Suma distancias del elemento a los seleccionados
           if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
             max_contrib = current_contrib;
-            greatest = *it;
+            greatest = i;
           }
         }
       }
 
-      return greatest;
+      s.push_back(greatest);
     }
 
     void repair(vector<vector<double> > &mat){
       while (s.size()>m){ // Sobran elementos, quito de la solución
-        int g = greatestContributor(mat);
-        s.erase(find(s.begin(),s.end(),g));
+        removeGreatest(mat);
       }
 
       while (s.size()<m){ // Faltan elementos, añado de fuera
-        int g = greatestContributor(mat, true);
-        s.push_back(g);
+        addGreatest(mat);
       }
     }
 };
@@ -170,10 +166,10 @@ class Population {
 public:
   vector<Solution> v;
 
-  Population(int tam, bool first=false) {
-    v.resize(tam);
+  Population(bool first=false) {
+    v.resize(CHROMOSOMES);
     if (first){ // La primera población de todas
-      for (int i = 0; i < tam; i++){
+      for (int i = 0; i < CHROMOSOMES; i++){
         v[i].s=randomSol();
         // v[i].fitness=evaluateSolution(v[i].s);
       }
@@ -185,22 +181,22 @@ public:
   }
 
   void evaluate(vector<vector<double> > &mat) {
-    for (unsigned i=0;i<v.size(); i++){
+    for (unsigned i=0;i<CHROMOSOMES; i++){
       v[i].evaluate(mat);
     }
   }
 
   int binTournament(){ // Devuelve el mejor índice de dos aleatorios
-    int s1 = rand()%v.size();
-    int s2 = rand()%v.size();
+    int s1 = rand()%CHROMOSOMES;
+    int s2 = rand()%CHROMOSOMES;
     return v[s1].fitness>v[s2].fitness ? s1 : s2;
   }
 
   void replacement(){
-    Population pop=Population(v.size());
+    Population pop=Population();
     int best = bestSol(); // Índice de la mejor solución
     bool elitism=false;
-    for (unsigned i = 0; i<v.size(); i++){
+    for (unsigned i = 0; i<CHROMOSOMES; i++){
       int s=binTournament();
       pop.v[i]=v[s];
       if (s==best) // La mejor solución sobrevive
@@ -215,15 +211,15 @@ public:
   }
 
   void mutate(){
-    int mutations = PROB_MUT*v.size(); // Número esperado de mutaciones, la prob. hay que partirla por m y luego multiplicarla por m
+    int mutations = PROB_MUT*n*CHROMOSOMES; // Número esperado de mutaciones
     for (int i = 0; i < mutations; i++){
-      v[rand()%v.size()].mutate(); // Una solución aleatoria muta un gen aleatorio
+      v[rand()%CHROMOSOMES].mutate(); // Una solución aleatoria muta un gen aleatorio
     }
   }
 
   int bestSol(){ // Índice mejor solución
     int best_index=0;
-    for(unsigned i = 1; i < v.size(); i++){
+    for(unsigned i = 1; i < CHROMOSOMES; i++){
         if(v[i].fitness>v[best_index].fitness)
             best_index=i;
     }
@@ -232,7 +228,7 @@ public:
 
   int worstSol(){ // Índice peor solución
     int worst_index=0;
-    for(unsigned i = 1; i < v.size(); i++){
+    for(unsigned i = 1; i < CHROMOSOMES; i++){
         if(v[i].fitness<v[worst_index].fitness)
             worst_index=i;
     }
@@ -240,7 +236,7 @@ public:
   }
 
   void cross(vector<vector<double> > &mat){
-      int n_2cross=PROB_CROSS*m; // Doble del número esperado de cruces
+      int n_2cross=PROB_CROSS*CHROMOSOMES; // Doble del número esperado de cruces
       Solution child1, child2;
       for(int i=0; i<n_2cross; i+=2){
           child1=uniformCross(v[i],v[i+1],mat); // Genero los hijos
@@ -251,18 +247,18 @@ public:
   }
 };
 
-void agg(vector<vector<double> > &mat, unsigned m) {
+void agg(vector<vector<double> > &mat) {
 
   clock_t t_start, t_total;
   t_start = clock();
 
-  Population population(m, true); // Primera población
+  Population population(true); // Primera población
 
   while(EVALS<LIMIT){
     population.cross(mat);
     population.mutate();
     population.evaluate(mat);
-    EVALS+=m;
+    EVALS+=CHROMOSOMES;
     population.replacement();
   }
 
@@ -278,6 +274,8 @@ void agg(vector<vector<double> > &mat, unsigned m) {
 int main( int argc, char *argv[] ) {
 
   cin >> n >> m; // Leemos los parámetros n y m
+  PROB_MUT/=n; // La probabilidad de mutación va dividida por n (nº de genes por cromosoma)
+
   vector<double> v (n, 0); // Vector de ceros con n componentes
   vector<vector<double > > mat (n, v); // Matriz de nxn ceros
   readInput(mat); // Leemos la entrada
@@ -285,5 +283,5 @@ int main( int argc, char *argv[] ) {
   cout << fixed;
   srand(stoi(argv[1])); // SEED as parameter
 
-  agg(mat, m);
+  agg(mat);
 }
