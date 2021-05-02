@@ -10,10 +10,13 @@ OPT=-Wall -O2
 # Nombre de la práctica
 PRJ=practica1
 
-all: $(BIN)/AGG-uniforme
+all: $(BIN)/AGG-uniforme $(BIN)/AGG-posicion
 
 # Compilamos
 $(BIN)/AGG-uniforme : $(SRC)/AGG-uniforme.cpp
+	g++ $(OPT) $^ -o $@
+
+$(BIN)/AGG-posicion : $(SRC)/AGG-posicion.cpp
 	g++ $(OPT) $^ -o $@
 
 clean:
