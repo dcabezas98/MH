@@ -86,12 +86,12 @@ class Solution {
   public:
     vector<int> s;
     double fitness;
-    bool evaluated;
+    bool evaluated=false;
 
     void operator = (const Solution &sol) {
       s=sol.s;
       fitness=sol.fitness;
-      evaluated=false;
+      evaluated=sol.evaluated;
     }
 
     void evaluate(vector<vector<double> > &mat) {
