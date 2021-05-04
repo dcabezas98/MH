@@ -59,14 +59,20 @@ class Solution {
   public:
     vector<int> s;
     double fitness;
+    bool evaluated;
 
     void operator = (const Solution &sol) {
       s=sol.s;
       fitness=sol.fitness;
+      evaluated=false;
     }
 
     void evaluate(vector<vector<double> > &mat) {
-      fitness = evaluateSolution(s, mat);
+      if(!evaluated){
+        fitness = evaluateSolution(s, mat);
+        EVALS++;
+      }
+      evaluated=true;
     }
 
     void mutate() { // Muta un gen aleatorio
@@ -79,6 +85,8 @@ class Solution {
       } while(find(s.begin(),s.end(),elem_in)!=s.end()); // Si ya está, cogemos otro
 
       s[elem_out]=elem_in; // En la posición del que saco, pongo el que entra
+
+      evaluated=false;
     }
 
     void removeGreatest(vector<vector<double> > &mat){ // Borra el mayor contribuyente de la solución
@@ -258,7 +266,6 @@ void agg(vector<vector<double> > &mat) {
     population.cross(mat);
     population.mutate();
     population.evaluate(mat);
-    EVALS+=CHROMOSOMES;
     population.replacement();
   }
 

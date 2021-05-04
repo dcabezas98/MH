@@ -9,6 +9,10 @@ using namespace std;
 int EVALS=0; // Llamadas a evaluación
 const int LIMIT=100000; // Límite de evaluaciones
 
+const int LS_LIMIT=400; // Límite de evaluaciones en una búsqueda local
+
+const int GENERATIONS_LS=10; // Cada cuantas generaciones se aplica la búsqueda local
+
 const int CHROMOSOMES=50; // Nº cromosomas
 
 const float PROB_CROSS=0.7;
@@ -17,6 +21,8 @@ float PROB_MUT=0.1; // Hay que partir por n (nº genes por cromosoma) luego
 /* Parámetros del problema, fijos durante toda la ejecución*/
 unsigned n=0; // Número de posibles elementos (número de genes)
 unsigned m=0; // Tam. soluciones (número de genes a 1)
+
+vector<int> elements; // Todos los elementos (números del 0 al n)
 
 // random generator function:
 int rndGen (int i) { return rand()%i;}
@@ -55,6 +61,27 @@ double evaluateSolution(vector<int> &solution, vector<vector<double> > &mat) {
   return fitness /= 2; // Las cuenta doble
 }
 
+// Para la búsqueda local
+
+// Posición del menor contribuyente
+unsigned lowestContributor(vector<int> &solution, vector<vector<double> > &mat, double &min_contrib){
+
+  unsigned lowest=0;
+  double current_contrib;
+  min_contrib = singleContribution(solution, mat, solution[lowest]);
+
+  for (unsigned i=1 ; i<solution.size(); i++) {
+    current_contrib = singleContribution(solution, mat, solution[i]); // Suma distancias del elemento a los seleccionados
+    if (current_contrib < min_contrib) { // Si la suma es menor, lo reemplaza
+      min_contrib = current_contrib;
+      lowest = i;
+    }
+  }
+
+  return lowest;
+}
+
+// Clase solución (un cromosoma)
 class Solution {
   public:
     vector<int> s;
@@ -88,14 +115,88 @@ class Solution {
 
       evaluated=false;
     }
+
+    void removeGreatest(vector<vector<double> > &mat){ // Borra el mayor contribuyente de la solución
+      double current_contrib, max_contrib=0;
+      vector<int>::iterator it, it_g;
+      for (it=s.begin(); it!=s.end(); it++){
+        current_contrib = singleContribution(s, mat, *it); // Suma distancias del elemento a los seleccionados
+        if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
+          max_contrib = current_contrib;
+          it_g = it;
+        }
+      }
+
+      s.erase(it_g);
+    }
+
+    void addGreatest(vector<vector<double> > &mat){ // Añade el mayor contribuyente de fuera de la solución
+      int greatest=-1;
+      double current_contrib, max_contrib=0;
+
+      for (unsigned i = 0; i < n; i++){
+        if (find(s.begin(),s.end(),i)==s.end()) { // Si no está en la solución
+          current_contrib = singleContribution(s, mat, i); // Suma distancias del elemento a los seleccionados
+          if (current_contrib > max_contrib) { // Si la suma es mayor, lo reemplaza
+            max_contrib = current_contrib;
+            greatest = i;
+          }
+        }
+      }
+
+      s.push_back(greatest);
+    }
+
+    void repair(vector<vector<double> > &mat){
+      while (s.size()>m){ // Sobran elementos, quito de la solución
+        removeGreatest(mat);
+      }
+
+      while (s.size()<m){ // Faltan elementos, añado de fuera
+        addGreatest(mat);
+      }
+    }
+
+    void localSearch(vector<vector<double> > &mat){
+
+      int evals = 0;
+
+      unsigned lowest_pos;
+      double contrib, min_contrib;
+
+      vector<int>::iterator it; // Para iterar sobre los candidatos
+      int candidate;
+
+      bool carryon = true;
+      while(carryon){
+        carryon=false;
+        lowest_pos=lowestContributor(s,mat,min_contrib);
+
+        random_shuffle(elements.begin(),elements.end(),rndGen); // Barajo candidatos para explorar entornos en orden aleatorio
+      
+        for (it=elements.begin(); !carryon && it!= elements.end() && evals<LS_LIMIT && EVALS<LIMIT; it++){
+          candidate=*it;
+          if (find(s.begin(),s.end(),candidate)!=s.end()) // Ya está escogido
+            continue; // Salto a la siguiente iteración
+
+          contrib=singleContribution(s,mat,candidate)-mat[candidate][s[lowest_pos]]; // Calculo la contribución del candidato sin el que voy a quitar
+          EVALS++; // Evalúo solución (factorizada)
+          evals++;
+
+          if(contrib > min_contrib){ // Salto a una mejor solución
+            fitness=fitness+contrib-min_contrib;
+            carryon=true;
+            s[lowest_pos]=candidate;
+          }
+        }
+      }
+    }
 };
 
-// Cruze basado en posición
-Solution positionCross(const Solution &sol1, const Solution &sol2, vector<vector<double> > &mat){
+// Cruze uniforme
+Solution uniformCross(const Solution &sol1, const Solution &sol2, vector<vector<double> > &mat){
     Solution child;
     bool inS1, inS2;
-    vector<int> aux(n); // Elementos selecionados en un padre y no en el otro
-    unsigned n_aux=0;
 
     for(unsigned i = 0; i<n; i++){
         inS1=find(sol1.s.begin(),sol1.s.end(),i)!=sol1.s.end();
@@ -103,21 +204,12 @@ Solution positionCross(const Solution &sol1, const Solution &sol2, vector<vector
         if (inS1 && inS2) // Está en los dos padres
             child.s.push_back(i); 
         else if (!inS1 && !inS2){} // No está en ninguno
-        else { // Está en uno de ellos
-          aux[n_aux]=i;
-          n_aux++;
+        else { // Está en uno de ellos, lo selecciono con un 50% de probabilidad
+            if (rand()%2==1)
+                child.s.push_back(i);
         }
     }
-    for (unsigned i = 0; i < n-n_aux; i++){ // Elimino los espacios no utilizados
-      aux.pop_back();
-    }
-
-    random_shuffle(aux.begin(),aux.end(),rndGen); // Relleno con aleatorios
-    while (child.s.size()<m){
-      child.s.push_back(aux.back());
-      aux.pop_back();
-    }
-
+    child.repair(mat); // Reparamos el hijo, puede ser no factible
     return child;
 }
 
@@ -125,16 +217,11 @@ Solution positionCross(const Solution &sol1, const Solution &sol2, vector<vector
 vector<int> randomSol(){
 
   vector<int> selected;
-  vector<int> elements;
-  for (unsigned i=0; i<n; i++) {
-    elements.push_back(i);
-  }
 
   random_shuffle(elements.begin(),elements.end(),rndGen);
 
   while (selected.size()<m){ 
-    selected.push_back(elements.back());
-    elements.pop_back();
+    selected.push_back(elements[selected.size()]);
   }
 
   return selected;
@@ -217,26 +304,43 @@ public:
       int n_2cross=PROB_CROSS*CHROMOSOMES; // Doble del número esperado de cruces
       Solution child1, child2;
       for(int i=0; i<n_2cross; i+=2){
-          child1=positionCross(v[i],v[i+1],mat); // Genero los hijos
-          child2=positionCross(v[i],v[i+1],mat);
+          child1=uniformCross(v[i],v[i+1],mat); // Genero los hijos
+          child2=uniformCross(v[i],v[i+1],mat);
           v[i]=child1; // Reemplazan a los padres
           v[i+1]=child2;
       }
   }
+
+  void localSearch(vector<vector<double> > &mat) {
+    float r;
+    for (unsigned i=0;i<CHROMOSOMES; i++){
+      r=static_cast<float>(rand())/static_cast<float>(RAND_MAX); // Número aleatorio en [0,1]
+      if (r<0.1)
+        v[i].localSearch(mat);
+    }
+  }
 };
 
-void agg(vector<vector<double> > &mat) {
+void am(vector<vector<double> > &mat) {
 
   clock_t t_start, t_total;
   t_start = clock();
 
   Population population(true); // Primera población
 
+  unsigned generation=0;
+
   while(EVALS<LIMIT){
     population.cross(mat);
     population.mutate();
     population.evaluate(mat);
     population.replacement();
+
+    generation++;
+
+    if (generation % GENERATIONS_LS == 0){ // Cada cierto número de generaciones
+      population.localSearch(mat);
+    }
   }
 
   t_total = clock() - t_start;
@@ -257,8 +361,12 @@ int main( int argc, char *argv[] ) {
   vector<vector<double > > mat (n, v); // Matriz de nxn ceros
   readInput(mat); // Leemos la entrada
 
+  for (unsigned i=0; i<n; i++) { // Todos los elementos
+    elements.push_back(i);
+  }
+
   cout << fixed;
   srand(stoi(argv[1])); // SEED as parameter
 
-  agg(mat);
+  am(mat);
 }
