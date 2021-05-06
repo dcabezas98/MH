@@ -192,8 +192,14 @@ public:
     unsigned w1=0, w2=0;
     worst2Sol(w1,w2);
     //cout << w1 << " " << w2 << endl;
-    v[w1]=child1;
-    v[w2]=child2;
+    /* Hay que quedarse con las dos mejores de las 4 */
+    if(child1.fitness>v[w2].fitness){
+      v[w1]=v[w2];
+      v[w2]=child1;
+    }else if (child1.fitness>v[w1].fitness)
+      v[w1]=child1;
+    if(child2.fitness>v[w1].fitness)
+      v[w1]=child2;
   }
 
   void cross(int p1, int p2, Solution &c1, Solution &c2, vector<vector<double> > &mat){
@@ -202,7 +208,7 @@ public:
   }
 };
 
-void agg(vector<vector<double> > &mat) {
+void age(vector<vector<double> > &mat) {
 
   clock_t t_start, t_total;
   t_start = clock();
@@ -257,5 +263,5 @@ int main( int argc, char *argv[] ) {
   cout << fixed;
   srand(stoi(argv[1])); // SEED as parameter
 
-  agg(mat);
+  age(mat);
 }

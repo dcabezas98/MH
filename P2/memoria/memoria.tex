@@ -59,7 +59,7 @@
 \SetKwInOut{Parameter}{parameter}
 
 
-\title{\Huge Metaheurísticas: Práctica 1 \\ Búsqueda Local y Algoritmos Greedy para el Problema de la Máxima Diversidad \vspace{10mm}}
+\title{\Huge Metaheurísticas: Práctica 2 \\ Técnicas de Búsqueda basadas en Poblaciones \\ para el Problema de la Máxima Diversidad \vspace{10mm}}
 
 \author{\huge David Cabezas Berrido \vspace{10mm} \\
 	\huge 20079906D \vspace{10mm} \\  
@@ -111,10 +111,15 @@ para atacarlo.
 \section{Aplicación de los algoritmos}
 
 Los algoritmos para resolver este problema tendrán como entradas la matriz $D$ ($n\times n$) y el valor $m$. La salida será un contenedor
-(vector, conjunto, \ldots) con los índices de los elementos seleccionados, y no un vector binario como el que utilizamos para la formulación. En nuestro caso utilizaremos conjuntos para representar soluciones.
+(vector, conjunto, \ldots) con los índices de los elementos seleccionados, y no un vector binario como el que utilizamos para la formulación.
+ En nuestro caso utilizaremos vectores de enteros para representar soluciones.
 
-Para representar las soluciones, usaremos conjuntos de enteros con los elementos seleccionados. La evaluación de la calidad de una solución se hará
-sumando la contribución de cada uno de los elementos, y dividiremos la evaluaciónen dos funciones. En lugar de calcular la función evaluación como en
+\textbf{Nota:} Al contrario de lo recomendado, mantenemos la representación entera (vector de enteros con los elementos seleccionados) en lugar de cambiar a la binaria para las soluciones.
+Esto conlleva la traducción de los operadores a la nueva representación. Sin embargo, aunque la descripción detallada de los operadores es
+algo más compleja, entender su funcionamiento es bastante más fácil con la representación entera. 
+
+La evaluación de la calidad de una solución se hará
+sumando la contribución de cada uno de los elementos, y dividiremos la evaluación en dos funciones. En lugar de calcular la función evaluación como en
 \eqref{eq:objetivo}, lo haremos así:
 \begin{equation} \label{eq:objetivo-fact}
 f(x)=\frac{1}{2}\sum_{i=1}^{m}\sum_{j=1}^m d(i,j)=\frac{1}{2}\sum_{i=1}^{m}\operatorname{contrib}(i)
@@ -126,9 +131,10 @@ $i$-ésimo. Esto es obviamente más lento que con $j>i$ en la sumatoria, pero no
  $m$ en lugar de $n$. No tenemos que computar distancias para luego multiplicarlas por cero como sugería la formulación en \eqref{eq:objetivo}.
 
 Presentamos el pseudocódigo de la función para calcular la contribución de un elemento $x_i$.
-\begin{algorithm}
+
+\begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un conjunto de índices $S$.}
+	\KwIn{Un vector de índices $S$.}
 	\KwIn{La matriz de distancias $D$.}
 	\KwIn{Un entero $e$ correspondiente al índice del elemento.}
 	\KwOut{La contribución del elemento $e$, como se describe en \eqref{eq:objetivo-fact}.}
@@ -137,7 +143,7 @@ Presentamos el pseudocódigo de la función para calcular la contribución de un
 		$contrib \gets contrib + D[e,s]$ \tcp*{Sumo las distancias del elemento $e$ a cada elemento de $S$}
 	}
 	\Return{$contrib$}\;
-	\caption{{\sc contrib} calcula la contribución de un elemento en una solución.}
+	\caption{{\sc Contrib} calcula la contribución de un elemento en una solución.}
 	\label{alg:contrib}
 \end{algorithm}
 
@@ -146,17 +152,18 @@ al completo invocando esta función con la que describiremos a continuación. Pe
  un nuevo elemento sin necesidad de añadirlo realmente. 
  
  Ahora presentamos el pseudocódigo de la función para evaluar una solución completa.
- \begin{algorithm}
+ 
+ \begin{algorithm}[H]
  	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
- 	\KwIn{Un conjunto de índices $S$.}
+ 	\KwIn{Un vector de índices $S$.}
  	\KwIn{La matriz de distancias $D$.}
  	\KwOut{El valor de la función objetivo sobre la solución compuesta por $S$, como se describe en \eqref{eq:objetivo-fact}.}
  	$fitness \gets 0$\;
  	\For{$e$ \textbf{in} $S$} {
  		$fitness \gets fitness + \operatorname{contrib}(S,D,e)$ \tcp*{Sumo la contribución de cada elemento de la solución}
  	}
- 	\Return{$fitness/2$} \tcp*{Hemos contado cada distancia dos veces} 
- 	\caption{{\sc fitness} calcula la evaluación de una solución.}
+ 	\Return{$fitness/2$} \tcp*{Hemos contado cada distancia dos veces}
+ 	\caption{{\sc Fitness} calcula la evaluación de una solución.}
  	\label{alg:eval}
  \end{algorithm}
 
@@ -170,117 +177,373 @@ Esta expresión nos será de utilidad para la implementación de los algoritmos.
 
 Gracias a la existencia del Algoritmo \ref{alg:contrib}, podemos obtener esta expresión como $\operatorname{contrib}(S,D,e)$.
 
-En esta práctica, compararemos los algoritmos Greedy y Búsqueda Local con Primer Mejor. Como trabajo volutario, incluimos también
- la comparación
-entre los criterios de búsqueda local \emph{mejor} y \emph{primer mejor}.
+En esta práctica, implementamos cuatro variantes de algoritmos genéticos (dos generacionales y dos estacionarios) y tres variantes
+de meméticos. Compararemos estos algoritmos entre sí y con los algoritmos Greedy y Búsqueda Local con Primer Mejor de la práctica anterior.
+
+Para los pseudocódigos que siguen, suponemos la matriz de distancias $D$ y los parámetros $n$ y $m$ accesibles.
+El conjunto de todos los elementos es el $\{0,\ldots,n-1\}$, para cuando nos refiramos a elementos de fuera de un subconjunto de ellos.
+
+Inicializamos la población con soluciones aleatorias, usamos la siguiente función.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwOut{Una solución válida del MDP obtenida aleatoriamente.}
+	$E \gets \{0,\ldots, n-1\}$ \tcp*{Vector con todos los elementos.}
+	$\operatorname{shuffle}(E)$\;
+	$S \gets \emptyset$ \tcp*{La solución empieza vacía.}
+	\While{$|S|<m$}{
+		$S \gets S\cup \{E[|S|]\}$ \tcp*{Seleccionamos los $m$ primeros elementos de $E$, que son aleatorios.}
+	}
+	\Return{$S$}\;
+	\caption{{\sc RandomSol} proporciona una solución válida aleatoria}
+	\label{alg:randomsol}
+\end{algorithm}
+
+\subsection{Operadores de los algoritmos genéticos}
+
+Usaremos dos operadores de cruce distintos. El primero es el \textbf{cruce uniforme}, que dados dos padres mantiene los elementos
+seleccionados por ambos (intersección) y por ninguno. Los elementos que sólo son seleccionados por uno de los padres se introducen
+con un 0.5 de probabilidad, pudiendo dar lugar a soluciones con más de $m$ elementos seleccionados. Es por ello que se aplica un
+\textbf{operador de reparación} posteriormente, que elimina (cuando sobran elementos) o añade (cuando faltan) siempre el elemento
+que más contribuye (dentro o fuera de la solución, según haya que eliminar o añadir).
+
+Cuando escribimos operaciones de conjuntos sobre vectores entendemos que no es relevante el orden
+de los elementos. Con la unión entre un vector y un elemento, podemos añadir el elemento al final, por ejemplo.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de índices $S$.}
+	\KwOut{El vector $S$ reparado (no lo devuelve, modifica el existente).}
+	\While{$|S|>m$}{
+		$g\gets\text{Elemento de $S$ que maximiza $\operatorname{contrib}(S,D,g)$}$\;
+		$S\gets S\backslash\{g\}$\;
+	}
+	\While{$|S|<m$}{
+		$g\gets\text{Elemento de fuera de $S$ que maximiza $\operatorname{contrib}(S,D,g)$}$\;
+		$S\gets S\cup\{g\}$\;
+	}
+	\caption{{\sc Repair} repara un vector solución que puede no contener $m$ elementos (puede ser no válida).}
+	\label{alg:reparacion}
+\end{algorithm}
+
+A continuación, proporcionamos el pseudocódigo del algoritmo de cruce uniforme.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Dos vectores de índices $S_1,S_2$.}
+	\KwOut{Un vector solución $S$ (hijo).}
+	$S\gets\emptyset$\;
+	\ForEach{$e$ in $0,\ldots,n-1$}{
+		\If{$e\in S_1$ and $e\in S_2$}{
+			$S\gets S\cup\{e\}$\;
+		}
+		\ElseIf{$e\notin S_1$ and $e\notin S_2$}{
+			No se incluye el elemento (no se hace nada).
+		}
+		\Else{
+			Con probabilidad 0.5: $S\gets S\cup\{e\}$\;
+		}
+	}
+	$\operatorname{repair}(S)$ \tcp*{La solución puede no ser factible.}
+	\Return{$S$}
+	\caption{{\sc UniformCross} genera un hijo cruzando dos padres.}
+	\label{alg:uniform-cross}
+\end{algorithm}
+
+El otro operador de cruce que consideramos es el cruce basado en posición. Este operador respeta los seleccionados y descartados
+por ambos padres, y completa con un subconjunto aleatorio de los elementos que sólo están seleccionados por uno de los padres hasta
+obtener un vector con $m$ elementos seleccionados.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Dos vectores de índices $S_1,S_2$.}
+	\KwOut{Un vector solución $S$ (hijo).}
+	$S\gets\emptyset$\;
+	$W\gets\emptyset$ \tcp*{Candidatos a completar la solución.}
+	\ForEach{$e$ in $0,\ldots,n-1$}{
+		\If{$e\in S_1$ and $e\in S_2$}{
+			$S\gets S\cup\{e\}$\;
+		}
+		\ElseIf{$e\notin S_1$ and $e\notin S_2$}{
+			No se incluye el elemento (no se hace nada).
+		}
+		\Else{
+			$W\gets W\cup\{e\}$\;
+		}
+	}
+	$W \gets \operatorname{shuffle}(W)$\;
+	\While{$|S|<m$}{
+		$e\gets W[0]$ \tcp*{Primer elemento de $W$, es aleatorio.}
+		$S\gets S\cup\{e\}$\;
+		$W\gets W\backslash\{e\}$\;
+	}
+	\Return{$S$}
+	\caption{{\sc PositionCross} genera un hijo cruzando dos padres.}
+	\label{alg:position-cross}
+\end{algorithm}
+
+Con la implementación que hemos hecho, ambos operadores sólo generan un hijo, por lo que llamaremos a estos operador dos veces cada vez que crucemos dos padres. Sería más eficiente generar dos hijos en cada ejecución para aprovechar parte de los cálculos.
+
+Necesitamos también un operador de mutación. Éste saca un elemento aleatorio de una solución y mete un elemento aleatorio de fuera.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector solución $S$.}
+	\KwOut{La solución $S$ modificada, la modifica en lugar de devolverla.}
+	$e_{out}\gets\text{numero aleatorio entre $0$ y $m-1$}$ \tcp*{Posición del elemento a eliminar.}
+	$e_{in}\gets\text{elemento aleatorio (número aleatorio entre $0$ y $n-1$)}$\;
+	\While{$e_{in}\in S$}{
+		$e_{in}\gets\text{elemento aleatorio}$ \tcp*{Forzamos que sea de fuera.}
+	}
+	$S[e_{out}]\gets e_{in}$\tcp*{Sustituimos el elemento a eliminar por el nuevo.}
+	\caption{{\sc Mutate} modifica una solución cambiando un elemento.}
+	\label{alg:mutate}
+\end{algorithm}
+
+Por último, necesitamos un operador de selección para elegir a los padres en cada iteración. Se hace uno de torneos binarios, donde se elige el mejor de dos soluciones aleatorias.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{El índice de la mejor solución entre dos elegidas aleatoriamente.}
+	$i_1\gets\text{número aleatorio entre 0 y $|P|$}$\;
+	$i_2\gets\text{número aleatorio entre 0 y $|P|$}$\;
+	$sol_1\gets P[i_1]$\;
+	$sol_2\gets P[i_2]$\;
+	\tcc{$sol.fitness$ almacena el resultado de $\operatorname{fitness}(sol)$ por razones de eficiencia.}
+	\If{$sol_1.fitness > sol_2.fitness$}{
+		\Return{$i_1$}
+	}
+	\Else{
+		\Return{$i_2$}
+	}
+	\caption{{\sc BinTournament} devuelve el índice de la mejor de dos soluciones aleatorias.}
+	\label{alg:bin-tournament}
+\end{algorithm}
+
+El uso de esta selección para reemplazar la población dependerá del esquema (generacional o estacionario).
+
+\subsection{Búsqueda local para los algoritmos meméticos}
+
+Proporcionamos la implementación del algoritmo de búsqueda local que usaremos en los algoritmos meméticos. Modifica una solución
+saltando al primer mejor vecino explorado hasta consumir un cierto número de evaluaciones o alcanzar un máximo local.
+
+Suponemos accesibles las variables $LIMIT=100000$ (límite total de evaluaciones), $EVALS$ (evaluaciones totales hasta el momento, comienza
+a 0)
+y $limit=400$ (límite de evaluaciones en una búsqueda local).
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Solución de partida $S$.}
+	\KwOut{La solución $S$ se modifica (no se devuelve) con varias iteraciones de búsqueda local.}
+	$E \gets \{0,\ldots,n-1\}$ \tcp*{Vector con todos los elementos.}
+	$evals \gets 0$\;
+	$carryon \gets true$\;
+	\While{carryon}{
+		$carryon \gets false$\;
+		$lowest\gets \text{indice del elemento de $S$ que menos contribuye, minimiza $\operatorname{contrib}(S,D,S[lowest])$}$\;
+		%$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$
+		$E \gets \operatorname{shuffle}(E)$ \tcp*{Para explorar los posibles vecinos en orden aleatorio.}
+		\For{$e$ \textbf{in} $E$} {
+			\If{$e\in S$}{
+				continue \tcp*{Si ya está escogido, no lo cuento.}
+			}
+			$contrib \gets \operatorname{contrib}(S,D,e)-D[e,S[lowest]]$ \tcp*{Contribución a la solución sin el elemento a sustituir.}
+			$EVALS \gets EVALS+1$ \tcp*{He evaludado una posible solución.}
+			$evals \gets evals+1$\;
+			\If{$contrib > min\_contrib$} { 
+				$S.fitness \gets S.fitness + contrib - min\_contrib$ \tcp*{Fitness de la nueva solución}
+				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
+				$S[lowest]\gets e$ \tcp*{Saltamos a la nueva solución}
+			}
+			\If{$carryon==true$ or $EVALS\geq LIMIT$ or $evals\geq limit$} { 
+				break  \tcp*{Se cumple alguna de las condiciones de parada}
+			}
+		}
+	}
+	\caption{{\sc LocalSearch} modifica una solución con varias iteraciones de búsqueda local con primer mejor.}
+	\label{alg:local-search}
+\end{algorithm}
 
 \pagebreak
 
 \section{Descripción de los algoritmos}
 
-\subsection{Búsqueda local}
+Distinguimos dos clases de algoritmos genéticos, según el esquema de reemplazamiento.
 
-Procedemos con la descripción del algoritmo de Búsqueda Local que se nos ha presentado en el seminario. 
-Este algoritmo utiliza la técnica del Primer Mejor, en la que se van generando soluciones en el entorno de la actual y se
-salta a la primera con mejor evaluación. Para la implementación del algoritmo, necesitamos distintos elementos.
+\subsection{Algoritmo genético generacional}
 
-El primer elemento, es una función para generar una solución aleatoria de partida. Simplemente se eligen $m$ elementos 
-diferentes del conjunto. Por comodidad, también calculamos el complementario.
+Para seleccionar la nueva población se realizan tantos torneos binarios como el tamaño de la población. Para conservar la mejor solución
+ (elitismo), ésta sustituye a la peor en caso de no sobrevivir a los torneos.
 
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{El entero $m$.}
-	\KwIn{El entero $n$.}
-	\KwOut{Una solución válida del MDP obtenida aleatoriamente.}
-	\KwOut{El complementario de la solución obtenida.}
-	$E \gets \{0,\ldots, n-1\}$ \tcp*{Conjunto con los elementos no seleccionados}
-	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
-	\While{$|S|<m$}{
-		$e \gets$ elemento aleatorio de $E$\;
-		$E \gets E\backslash \{e\}$\;
-		$S \gets S\cup \{e\}$\;
-	}
-	\Return{$S$}\;
-	\Return{$E$} \tcp*{El complementario}
-	\caption{{\sc RandomSol} proporciona una solución válida aleatoria}
-	\label{alg:randomsol}
-\end{algorithm}
-
-Lo siguiente que necesitamos es un método para generar las soluciones del entorno. Estas soluciones se consiguen sustituyendo
-el menor contribuyente de la solución actual por otro candidato. Presentamos el código para obtener el menor contribuyente.
-
- \begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un conjunto de elementos $S$.}
-	\KwIn{La matriz de distancias $D$.}
-	\KwOut{El elemento de $S$ que minimiza $\operatorname{contrib}(S,S,e)$ con $e\in S$.}
-	\KwOut{Su contribución, para la factorización de la función objetivo.}
-	$lowest \gets \text{primer elemento de } S$\;
-	$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$\;
-	\For{$s$ \textbf{in} $S$} {
-		$contrib \gets \operatorname{contrib}(S,D,s)$\;
-		\If{$contrib < min\_contrib$} { 
-			$min\_contrib \gets contrib$\;
-			$lowest \gets s$ \tcp*{Si encuentro un candidato con menor contribución, actualizo}
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{La población $P'$ de padres para la siguiente generación. No se devuelve, se modifica P.}
+	$P'\gets\emptyset$\;
+	$best\gets\text{índice de la solución de $P$ con mayor fitness}$\;
+	$elitism\gets false$ \tcp*{Para contemplar si sobrevive la mejor.}
+	\While{$|P'|<|P|$}{
+		$i\gets\operatorname{BinTournament}(P)$\;
+		$P'\gets P'\cup\{P[i]\}$\;
+		\If{$i=best$}{
+			$elitism\gets true$ \tcp*{Ha sobrevivido.}
 		}
 	}
-	\Return{$lowest$}\;
-	\Return{$min\_contrib$}\;
-	\caption{{\sc lowestContrib} obtiene el elemento de $S$ que menos contribuye en la valoración.}
-	\label{alg:lowest-contributor}
+	\If{$elitism=false$}{
+		$i\gets\text{índice de la solución de $P'$ con peor fitness}$\;
+		$P'[i]\gets P[best]$\;
+	}
+	$P\gets P'$\;
+	\caption{{\sc Replacement} devuelve la población de padres para la siguiente generación.}
+	\label{alg:replacement}
 \end{algorithm}
 
-En el caso de que $S$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
-esto no es relevante, ya que vale cualquier elemento de $S$.
+Hay que tener en cuenta que comparar si es la mejor solución por índice y no por fitness fuerza a que si hay soluciones repetidas
+(ocurrirá tras varias iteraciones del algoritmo, cada vez más), se fuerza a salvar una copia concreta de la solución. Esto le da ventaja
+a la mejor solución respecto a las demás, ya que puede salvarse y además copiarse una vez más.
+Con esta comparación, se acelera la convergencia del algoritmo pero se reduce la variedad de soluciones, aunque
+no en gran medida.
 
-Finalmente, proporcionamos el algoritmo de Búsqueda Local para actualizar la solución por otra del entorno iterativamente
-hasta encontrar un máximo local (una solución mejor que todas las de su entorno) ollegar a un límite de evaluaciones de la función
- objetivo: $LIMIT=100000$. Las soluciones del entorno se generan aleatoriamente.
+Para cruzar la población (de padres), se calcula el número esperado de cruces, $25\cdot\text{probabilidad de cruce}=18$ (nos quedamos
+con un entero). El valor 25 proviene del número de parejas que se forman con la población de 50 cromosomas. Como el operador de
+reemplazamiento construye una nueva población de padres aleatorios, podemos simplemente cruzar primero con segundo, tercero y cuarto, etc. (hasta llegar a 18 cruces).
+El cruce de dos soluciones puede ser uniforme o posicional, se estudian las dos alternativas.
 
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{El entero $m$.}
-	\KwIn{La matriz de distancias $D$, $n\times n$.}
-	\KwOut{Una solución válida del MDP por el algoritmo de BS que hemos descrito, junto con su evaluación.}
-	$S \gets \operatorname{randomSol}(m,n)$ \tcp*{Comenzamos con una solución aleatoria}
-	$E \gets \{0,\ldots,n-1\}\backslash S$ \tcp*{$\operatorname{randomSol}$ también devuelve el complementario}
-	$fitness \gets \operatorname{fitness}(S)$ \tcp*{Diversidad de la solución}
-	$E \gets \operatorname{vector}(E)$ \tcp*{No importa el orden, pero debe poder barajarse}
-	$carryon \gets true$\;
-	$LIMIT \gets 100000$ \tcp*{Límite de llamadas a la función de evaluación}
-	$CALLS \gets 0$\;
-	\While{carryon}{
-		$carryon \gets false$\;
-		$lowest = \operatorname{lowestContributor}(S,D)$\;
-		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$ \tcp*{Se calcula dentro de $\operatorname{lowestContributor}$}
-		$S \gets S\backslash\{lowest\}$\;
-		$E \gets \operatorname{shuffle}(E)$\;	
-		\For{$e$ \textbf{in} $E$} {
-			$contrib \gets \operatorname{contrib}(S,D,e)$\;
-			$CALLS \gets CALLS +1$ \tcp*{He evaludado una posible solución}
-			\If{$contrib > min\_contrib$} { 
-				$fitness \gets fitness + contrib - min\_contrib$ \tcp*{Diversidad de la nueva solución}
-				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
-				$S\gets S\cup\{e\}$ \tcp*{Saltamos a la nueva solución}
-				$E \gets E\backslash\{e\}$\;
-				$E \gets E\cup\{lowest\}$\;
-			}
-			\If{$carryon==true$ or $CALLS\geq LIMIT$} { 
-				\textbf{break}  \tcp*{Se cumple alguna de las condiciones de parada}
-			}
-		}
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{En la población $P$, se sustituyen cada pareja de padres por sus hijos.}
+	$n2cross=n\_chromosomes\cdot prob_{cross}$ \tcp*{Doble del número esperado de cruces.}
+	\For{$i=0,2,4,\dots,n2cross-1$}{
+		$child_1\gets \operatorname{Croos}(P[i],P[i+1])$\;
+		$child_2\gets \operatorname{Croos}(P[i],P[i+1])$\;
+		$P[i]\gets child_1$\;
+		$P[i+1]\gets child_2$\;
 	}
-	\If{$|S|<m$} { 
-		$S\gets S\cup\{lowest\}$ \tcp*{Si salimos porque no encontramos una mejor, recuperamos la solución}
-	}
-	\Return{$S$}\;
-	\Return{$fitness$}\;
-	\caption{{\sc LocalSearch}}
-	\label{alg:local-search}
+	\caption{{\sc Cross} cruza los padres de la población y los sustituye por los hijos.}
+	\label{alg:cross-generational}
 \end{algorithm}
 
-Cabe destacar que a diferencia del algoritmo Greedy (Algoritmo \ref{alg:greedy}) en el que se evalúa la solución al final,
-en este algoritmo se calcula factorizando. Esto acelera mucho los cálculos, ya que hay que evaluar muchas soluciones diferentes.
+Para la mutación, se calcula el número esperado de mutaciones. En este caso, el número de mutaciones no depende de $n$ y $m$, siempre
+es el 10\% del número de cromosomas, 5. Tantas veces como el número esperado de mutaciones, se elige una solución aleatoria, y esta
+muta un gen aleatorio como hemos descrito antes. El número de genes coincide con el parámetro $n$ del problema (debemos tener en cuenta
+que los parámetros que nos proponen corresponden a la representación binaria).
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{En la población $P$ mutan algunas soluciones, no se devuelve nada.}
+	$mutations=n\_chromosomes\cdot n\_genes\cdot prob_{mut}$ \tcp*{Donde $prob_{mut}=0.1\cdot n\_genes$.}
+	\For{$i=0,1,\dots,mutations-1$}{
+		$j\gets\text{número aleatorio entre $0$ y $|P|-1$}$ \tcp*{Índice de una solución aleatoria.}
+		$\operatorname{mutate(P[j])}$ \tcp*{La solución muta un gen aleatorio.}
+	}
+	\caption{{\sc Mutate} muta algunas soluciones de la población.}
+	\label{alg:mutate-generational}
+\end{algorithm}
+
+El esquema de reemplazamiento del algoritmo genético generacional es el siguiente.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
+	\KwOut{La población $P$ mutan algunas soluciones, no se devuelve nada.}
+	\While{$EVAlS<LIMIT$}{
+		$\operatorname{cross}(P)$\;
+		$\operatorname{mutate}(P)$\;
+		$\operatorname{evaluate}(P)$\;
+		$\operatorname{replacement}(P)$\;
+	}
+	\caption{{\sc AGG}.}
+	\label{alg:generational}
+\end{algorithm}
+
+En evaluación, se actualiza el fitness de cada solución, que se almacena por razones de eficiencia. Se usa un flag para evitar reevaluar soluciones
+que no cambien de una generación a otra. El flag está en ``actualizado'' para nuevas soluciones aleatorias y productos de cruces y
+mutaciones. Como la comprobación del límite de evaluaciones no se realiza en mitad de las iteraciones, podemos pasarnos del límite.
+Sin embargo, el número máximo de evaluaciones por iteración es de 41 (36 hijos + 5 mutaciones), por lo que como mucho llegaremos a
+100040 evaluaciones, lo que no supone mucho ni en tiempo ni en desempeño del algoritmo.
+
+\subsection{Algoritmo genético estacionario}
+
+En el esquema estacionario, sólo dos soluciones se cruzan y puden mutar en cada iteración. Los dos padres se eligen con dos
+torneos binarios.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{Índices de dos padres.}
+	$p_1\gets\operatorname{BinTournament}(P)$\;
+	$p_2\gets\operatorname{BinTournament}(P)$\;
+	\Return{$p_1,p_2$}\;
+	\caption{{\sc Selection} devuelve los índices de dos padres, que selecciona por torneo binario.}
+	\label{alg:selection-stationary}
+\end{algorithm}
+
+Dichos padres se cruzan para formar dos hijos, por cruce uniforme o basado en posición.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwIn{Los índices de los padres: $p_1$ y $p_2$.}
+	\KwOut{Dos nuevas soluciones (hijos).}
+	$child_1\gets\operatorname{cross}(P[p_1],P[p_2])$\;
+	$child_2\gets\operatorname{cross}(P[p_1],P[p_2])$\;
+	\Return{$child_1,child_2$}\;
+	\caption{{\sc Cross} devuelve dos soluciones, producto del cruce de los padres.}
+	\label{alg:cross-stationary}
+\end{algorithm}
+
+Se decide si mutan los hijos (cada uno con probabilidad 0.1, para preservar la esperanza de 0.2 mutaciones por iteración), y posteriormente sustituyen a las dos peores soluciones de la problación (siempre que las superen).
+De las 4 soluciones (2 peores + 2 hijos), debemos quedarnos con las 2 mejores. Esto lo conseguimos con la siguiente función.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwIn{Los dos hijos: $child_1$ y $child_2$.}
+	\KwOut{Modifica la población $P$ para sustituir las peores soluciones por los hijos (si estos las superan).}
+	$w_1,w_2\gets\text{índices de la peor y segunda peor soluciones de $P$ respectivamente}$\;
+	\If{$child_1.fitness>P[w_2].fitness$}{
+		$P[w_1]\gets P[w_2]$\;
+		$P[w_2]\gets child_1$\;
+	}
+	\ElseIf{$child_1.fitness>P[w_1].fitness$}{
+		$P[w_1]\gets child_1$\;
+	}
+	\If{$child_2.fitness>P[w_1].fitness$}{
+		$P[w_1]\gets child_2$\;
+	}
+	\caption{{\sc Replacement} se queda con las dos mejores de 4 soluciones: $\text{2 peores} + \text{2 hijos}$.}
+	\label{alg:replacement-stationary}
+\end{algorithm}
+
+El ciclo de evolución queda de la siguiente forma.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
+	\KwOut{La población $P$ mutan algunas soluciones, no se devuelve nada.}
+	Se evalúan todas las soluciones (50 evaluaciones), se incrementa $EVALS$ en 50\;
+	\While{$EVAlS<LIMIT$}{
+		$p_1,p_2\gets\operatorname{selection}(P)$\;
+		$\operatorname{cross}(P,p_1,p_2)$\;
+		$child_1$ muta con probabilidad 0.1\;
+		$child_2$ muta con probabilidad 0.1\;
+		$\operatorname{evaluate}(child_1)$\;
+		$\operatorname{evaluate}(child_2)$\;
+		$EVALS\gets EVALS+2$\;
+		$\operatorname{replacement}(P,child_1,child_2)$\;
+	}
+	\caption{{\sc AGE}.}
+	\label{alg:stationary}
+\end{algorithm}
+
+\subsection{Algoritmos meméticos}
+
+TODO
+
+\end{document}
 
 \pagebreak
 
