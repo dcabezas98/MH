@@ -328,7 +328,7 @@ El uso de esta selección para reemplazar la población dependerá del esquema (
 Proporcionamos la implementación del algoritmo de búsqueda local que usaremos en los algoritmos meméticos. Modifica una solución
 saltando al primer mejor vecino explorado hasta consumir un cierto número de evaluaciones o alcanzar un máximo local.
 
-Suponemos accesibles las variables $LIMIT=100000$ (límite total de evaluaciones), $EVALS$ (evaluaciones totales hasta el momento, comienza
+Suponemos accesibles las variables globales $LIMIT=100000$ (límite total de evaluaciones), $EVALS$ (evaluaciones totales hasta el momento, comienza
 a 0)
 y $limit=400$ (límite de evaluaciones en una búsqueda local).
 
@@ -448,7 +448,7 @@ El esquema de reemplazamiento del algoritmo genético generacional es el siguien
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
 	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
-	\KwOut{La población $P$ mutan algunas soluciones, no se devuelve nada.}
+	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias generaciones.}
 	\While{$EVAlS<LIMIT$}{
 		$\operatorname{cross}(P)$\;
 		$\operatorname{mutate}(P)$\;
@@ -523,7 +523,7 @@ El ciclo de evolución queda de la siguiente forma.
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
 	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
-	\KwOut{La población $P$ mutan algunas soluciones, no se devuelve nada.}
+	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias iteraciones.}
 	Se evalúan todas las soluciones (50 evaluaciones), se incrementa $EVALS$ en 50\;
 	\While{$EVAlS<LIMIT$}{
 		$p_1,p_2\gets\operatorname{selection}(P)$\;
@@ -541,68 +541,78 @@ El ciclo de evolución queda de la siguiente forma.
 
 \subsection{Algoritmos meméticos}
 
-TODO
+Los algoritmos meméticos combinan el esquema evolutivo generacional con el algoritmo de búsqueda local. Ya hemos mostrado la implementación
+de búsqueda local a nivel de solución. Ahora mostraremos cómo se aplica la búsqueda local a nivel de población, lo que diferencia las
+distintas variantes de meméticos.
 
-\end{document}
+En la primera versión, AM-(10,1.0), se aplica búsqueda local cada 10 generaciones sobre todos los cromosomas de la población.
 
-\pagebreak
-
-\section{Algoritmo de comparación: Greedy}
-
-Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy}. El algoritmo consiste en empezar por el
- elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución válida.
-
-Como elemento más lejano al resto se toma el elemento cuya suma de las distancias al resto sea la mayor. Y en cada iteración se introduce el elemento
-cuya suma de las distancias a los seleccionados sea mayor. Es decir, utilizamos la definición de \eqref{eq:distance-elem-set}.
-
-Para calcular ambos valores, usamos la siguiente función, que permite obtener el de entre
-un conjunto de candidatos más lejano (en el sentido que acabamos de comentar) a los elementos de un conjunto dado.
-El código para calcularlo es similar al del algoritmo \ref{alg:lowest-contributor}.
-
- \begin{algorithm}[H]
+\begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un conjunto de candidatos $C$.}
-	\KwIn{Un conjunto de elementos $S$.}
-	\KwIn{La matriz de distancias $D$.}
-	\KwOut{El candidato más lejano en el sentido de \eqref{eq:distance-elem-set}.}
-	$farthest \gets \text{primer elemento de } C$\;
-	$max\_contrib \gets \operatorname{contrib}(S,D,farthest)$\;
-	\For{$e$ \textbf{in} $C$} {
-		$contrib \gets \operatorname{contrib}(S,D,e)$\;
-		\If{$contrib > max\_contrib$} { 
-			$max\_contrib \gets contrib$\;
-			$farthest \gets e$ \tcp*{Si encuentro un candidato con mayor contribución, actualizo}
-		}
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{La población $P$ (se modifica, no se devuelve) después de que todas las soluciones mejoren con búsqueda local.}
+	\ForEach{$sol$ in $P$}{
+		$\operatorname{LocalSearch}(sol)$\;
 	}
-	\Return{$farthest$}\;
-	\caption{{\sc farthest} obtiene el candidato más lejano a los elementos de $S$.}
-	\label{alg:farthest-candidate-set}
+	\caption{{\sc LocalSearch} de AM-(10,1.0).}
+	\label{alg:am-10-1}
 \end{algorithm}
 
-En el caso de que $C$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
-esto no es relevante, ya que vale cualquier elemento de $C$.
+En la versión AM-(10,0.1), se aplica búsqueda local a cada cromosoma con probabilidad 0.1 cada 10 generaciones.
 
-Ya estamos en condiciones de proporcionar una descripción del algoritmo Greedy.
-
- \begin{algorithm}[H]
+\begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{La matriz de distancias $D$.}
-	\KwIn{El entero $m$.}
-	\KwOut{Una solución válida del MDP obtenida como hemos descrito anteriormente, y su diversidad.}
-	$C \gets \{0,\ldots, n-1\}$ \tcp*{En principio los $n$ elementos son candidatos}
-	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
-	$farthest \gets \operatorname{farthest}(C,C,D)$ \tcp*{Elemento más lejano al resto}
-	$C \gets C\backslash \{farthest\}$\;
-	$S \gets S\cup \{farthest\}$\;
-	\While{$|S|<m$}{
-		$farthest \gets \operatorname{farthest}(C,S,D)$ \tcp*{Elemento más lejano a los seleccionados}
-		$C \gets C\backslash \{farthest\}$\;
-		$S \gets S\cup \{farthest\}$\;
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{La población $P$ (se modifica, no se devuelve) después de que algunas de las soluciones mejoren con búsqueda local.}
+	\ForEach{$sol$ in $P$}{
+		Con probabilidad 0.1: $\operatorname{LocalSearch}(sol)$\;
 	}
-	\Return{$S$}\;
-	\Return{$\operatorname{fitness}(S)$}\;
-	\caption{{\sc Greedy}}
-	\label{alg:greedy}
+	\caption{{\sc LocalSearch} de AM-(10,0.1).}
+	\label{alg:am-10-01}
+\end{algorithm}
+
+En la versión AM-(10,0.1mej), se aplica búsqueda local a las 5 mejores soluciones (mejor 10\% de la población).
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población).}
+	\KwOut{La población $P$ (se modifica, no se devuelve) después de que las 5 mejores soluciones mejoren con búsqueda local.}
+	$q\gets\emptyset$ \tcp*{Cola con prioridad donde almacenaré parejas (fitness,índice), se ordenan por mayor fitness.}
+	\ForEach{$i=0,\ldots,|P|-1$}{
+		$q\gets q\cup\{(P[i].fitness,i)\}$\;
+	}
+	$k\gets 0.1\cdot n\_chromosomes$ \tcp*{Sacaré los 10\% mejores (5).}
+	\For{$j=0,\ldots,k-$1}{
+		$\operatorname{LocalSearch}(P[q.top.second])$\;
+		$q.pop$\;
+	}
+	\caption{{\sc LocalSearch} de AM-(10,0.1mej).}
+	\label{alg:am-10-01mej}
+\end{algorithm}
+
+El cuerpo principal de los algoritmos meméticos es el siguiente, la función LocalSearch (a nivel de población) es lo que diferencia
+las distintas alternativas.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
+	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias iteraciones.}
+	Se evalúan todas las soluciones (50 evaluaciones), se incrementa $EVALS$ en 50\;
+	$generation\gets 0$\;
+	\While{$EVAlS<LIMIT$}{
+		$\operatorname{cross}(P)$\;
+		$\operatorname{mutate}(P)$\;
+		$\operatorname{evaluate}(P)$\;
+		$\operatorname{replacement}(P)$\;
+		
+		$generation\gets generation+1$\;
+		
+		\If{$generation \operatorname{mod} 10 == 0$}{
+			$\operatorname{LocalSearch}(P)$\;
+		}
+	}
+	\caption{{\sc AM}.}
+	\label{alg:am}
 \end{algorithm}
 
 \pagebreak
@@ -610,16 +620,25 @@ Ya estamos en condiciones de proporcionar una descripción del algoritmo Greedy.
 \section{Desarrollo de la práctica}
 
 La implementación de los algoritmos y la experimentación con los mismos se ha llevado acabo de C++, utilizando la librería STL. 
-Para representar la soluciones hemos hecho uso del tipo \texttt{unordered\_set}, ya que se realizan pocas operaciones de consulta y
-muchas de inserción y borrado.
+Para representar la soluciones hemos hecho uso del tipo \texttt{vector}.
+
+La mayoría de operadores (mutación, cruce, búsqueda local) se implementan a nivel de solución y a nivel de población para abstraer
+las operaciones y que el código sea más reciclable, generalmente como métodos de clase.
 
 Para medir los tiempos de ejecución se utiliza la función \texttt{clock} de la librería \texttt{time.h}.
 
 A lo largo de la práctica se utilizan acciones aleatorias. Utilizamos la librería \texttt{stdlib.h} para la generación de
-números pseudoaleatorios con \texttt{rand} y fijamos la semilla con \texttt{srand}. También se baraja el vector de candidatos
-en la búsqueda local con la función \texttt{random\_shuffle} de la librería \texttt{algorithm}.
+enteros (no negativos) pseudoaleatorios con \texttt{rand} y fijamos la semilla con \texttt{srand}. Se barajan vectores con la función
+ \texttt{random\_shuffle} de la librería \texttt{algorithm}.
+ 
+Para las acciones que se realizan con cierta probabilidad, es necesario generar flotantes pseudoaleatorios en el intervalos $[0,1]$.
+Para esto, se genera un entero no negativo con \texttt{rand} y se divide entre el máximo posible (RAND\_MAX).
 
 Se almacena la matriz de distancias completa (no sólo un triángulo) por comodidad de los cálculos.
+
+Se utiliza optimización de código \texttt{-O2} al compilar.
+
+\end{document}
 
 \subsection{Manual de usuario}
 
