@@ -24,13 +24,10 @@ with open(filename, 'r') as csvfile:
     # get total number of rows 
     # print("Total no. of rows: %d"%(csvreader.line_num)) 
   
-# printing the field names 
-print('\\begin{table}[H]\n\centering\n\caption{}\n\label{tab:}')
-
 # printing the structure of the table
-s = "l"
+s = "c"
 for i in range(len(fields)-1):
-    s += "r"
+    s += "c"
 print('\\begin{tabular}{|' + s + '|}')
 print('\\hline')
 print(' & '.join(field for field in fields) + '\\\\ \hline')
@@ -49,4 +46,8 @@ for row in rows:
     print(s)
 
 # printing end of table
-print('\\hline\n\end{tabular}\n\end{table}')
+print('\\hline\n\end{tabular}')
+
+
+
+
