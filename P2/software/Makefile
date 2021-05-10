@@ -35,4 +35,4 @@ $(BIN)/AM-10-01mej : $(SRC)/AM-10-01mej.cpp
 	g++ $(OPT) $^ -o $@
 
 clean:
-	rm -f $(BIN)/*
+	find bin/* ! -name LEEME.md -delete
