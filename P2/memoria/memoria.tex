@@ -112,7 +112,7 @@ para atacarlo.
 
 Los algoritmos para resolver este problema tendrán como entradas la matriz $D$ ($n\times n$) y el valor $m$. La salida será un contenedor
 (vector, conjunto, \ldots) con los índices de los elementos seleccionados, y no un vector binario como el que utilizamos para la formulación.
- En nuestro caso utilizaremos vectores de enteros para representar soluciones.
+ En nuestro caso (algoritmos implementados en esta práctica) utilizaremos vectores de enteros para representar soluciones.
 
 \textbf{Nota:} Al contrario de lo recomendado, mantenemos la representación entera (vector de enteros con los elementos seleccionados) en lugar de cambiar a la binaria para las soluciones.
 Esto conlleva la traducción de los operadores a la nueva representación. Sin embargo, aunque la descripción detallada de los operadores es
@@ -396,7 +396,7 @@ Para seleccionar la nueva población se realizan tantos torneos binarios como el
 	}
 	$P\gets P'$\;
 	\caption{{\sc Replacement} devuelve la población de padres para la siguiente generación.}
-	\label{alg:replacement}
+	\label{alg:replacement-agg}
 \end{algorithm}
 
 Hay que tener en cuenta que comparar si es la mejor solución por índice y no por fitness fuerza a que si hay soluciones repetidas
@@ -617,6 +617,171 @@ las distintas alternativas.
 
 \pagebreak
 
+\subsection{Búsqueda local}
+
+Procedemos con la descripción del algoritmo de Búsqueda Local que se nos ha presentado en el seminario. 
+Este algoritmo utiliza la técnica del Primer Mejor, en la que se van generando soluciones en el entorno de la actual y se
+salta a la primera con mejor evaluación. Para la implementación del algoritmo, necesitamos distintos elementos.
+
+El primer elemento, es una función para generar una solución aleatoria de partida. Simplemente se eligen $m$ elementos 
+diferentes del conjunto. Por comodidad, también calculamos el complementario.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{El entero $m$.}
+	\KwIn{El entero $n$.}
+	\KwOut{Una solución válida del MDP obtenida aleatoriamente.}
+	\KwOut{El complementario de la solución obtenida.}
+	$E \gets \{0,\ldots, n-1\}$ \tcp*{Conjunto con los elementos no seleccionados}
+	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
+	\While{$|S|<m$}{
+		$e \gets$ elemento aleatorio de $E$\;
+		$E \gets E\backslash \{e\}$\;
+		$S \gets S\cup \{e\}$\;
+	}
+	\Return{$S$}\;
+	\Return{$E$} \tcp*{El complementario}
+	\caption{{\sc RandomSol} proporciona una solución válida aleatoria}
+	\label{alg:randomsol}
+\end{algorithm}
+
+Lo siguiente que necesitamos es un método para generar las soluciones del entorno. Estas soluciones se consiguen sustituyendo
+el menor contribuyente de la solución actual por otro candidato. Presentamos el código para obtener el menor contribuyente.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un conjunto de elementos $S$.}
+	\KwIn{La matriz de distancias $D$.}
+	\KwOut{El elemento de $S$ que minimiza $\operatorname{contrib}(S,S,e)$ con $e\in S$.}
+	\KwOut{Su contribución, para la factorización de la función objetivo.}
+	$lowest \gets \text{primer elemento de } S$\;
+	$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$\;
+	\For{$s$ \textbf{in} $S$} {
+		$contrib \gets \operatorname{contrib}(S,D,s)$\;
+		\If{$contrib < min\_contrib$} { 
+			$min\_contrib \gets contrib$\;
+			$lowest \gets s$ \tcp*{Si encuentro un candidato con menor contribución, actualizo}
+		}
+	}
+	\Return{$lowest$}\;
+	\Return{$min\_contrib$}\;
+	\caption{{\sc lowestContrib} obtiene el elemento de $S$ que menos contribuye en la valoración.}
+	\label{alg:lowest-contributor}
+\end{algorithm}
+
+En el caso de que $S$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
+esto no es relevante, ya que vale cualquier elemento de $S$.
+
+Finalmente, proporcionamos el algoritmo de Búsqueda Local para actualizar la solución por otra del entorno iterativamente
+hasta encontrar un máximo local (una solución mejor que todas las de su entorno) o llegar a un límite de evaluaciones de la función
+objetivo: $LIMIT=100000$. Las soluciones del entorno se generan aleatoriamente.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{El entero $m$.}
+	\KwIn{La matriz de distancias $D$, $n\times n$.}
+	\KwOut{Una solución válida del MDP por el algoritmo de BS que hemos descrito, junto con su evaluación.}
+	$S \gets \operatorname{randomSol}(m,n)$ \tcp*{Comenzamos con una solución aleatoria}
+	$E \gets \{0,\ldots,n-1\}\backslash S$ \tcp*{$\operatorname{randomSol}$ también devuelve el complementario}
+	$fitness \gets \operatorname{fitness}(S)$ \tcp*{Diversidad de la solución}
+	$E \gets \operatorname{vector}(E)$ \tcp*{No importa el orden, pero debe poder barajarse}
+	$carryon \gets true$\;
+	$LIMIT \gets 100000$ \tcp*{Límite de llamadas a la función de evaluación}
+	$CALLS \gets 0$\;
+	\While{carryon}{
+		$carryon \gets false$\;
+		$lowest = \operatorname{lowestContributor}(S,D)$\;
+		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$ \tcp*{Se calcula dentro de $\operatorname{lowestContributor}$}
+		$S \gets S\backslash\{lowest\}$\;
+		$E \gets \operatorname{shuffle}(E)$\;	
+		\For{$e$ \textbf{in} $E$} {
+			$contrib \gets \operatorname{contrib}(S,D,e)$\;
+			$CALLS \gets CALLS +1$ \tcp*{He evaludado una posible solución}
+			\If{$contrib > min\_contrib$} { 
+				$fitness \gets fitness + contrib - min\_contrib$ \tcp*{Diversidad de la nueva solución}
+				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
+				$S\gets S\cup\{e\}$ \tcp*{Saltamos a la nueva solución}
+				$E \gets E\backslash\{e\}$\;
+				$E \gets E\cup\{lowest\}$\;
+			}
+			\If{$carryon==true$ or $CALLS\geq LIMIT$} { 
+				\textbf{break}  \tcp*{Se cumple alguna de las condiciones de parada}
+			}
+		}
+	}
+	\If{$|S|<m$} { 
+		$S\gets S\cup\{lowest\}$ \tcp*{Si salimos porque no encontramos una mejor, recuperamos la solución}
+	}
+	\Return{$S$}\;
+	\Return{$fitness$}\;
+	\caption{{\sc LocalSearch}}
+	\label{alg:local-search}
+\end{algorithm}
+
+Cabe destacar que en este algoritmo se calcula la fitness factorizando. Esto acelera mucho los cálculos, ya que hay que evaluar muchas soluciones diferentes.
+
+\pagebreak
+
+\section{Algoritmo de comparación: Greedy}
+
+Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy}. El algoritmo consiste en empezar por el
+elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución válida.
+
+Como elemento más lejano al resto se toma el elemento cuya suma de las distancias al resto sea la mayor. Y en cada iteración se introduce el elemento
+cuya suma de las distancias a los seleccionados sea mayor. Es decir, utilizamos la definición de \eqref{eq:distance-elem-set}.
+
+Para calcular ambos valores, usamos la siguiente función, que permite obtener el de entre
+un conjunto de candidatos más lejano (en el sentido que acabamos de comentar) a los elementos de un conjunto dado.
+El código para calcularlo es similar al del algoritmo \ref{alg:lowest-contributor}.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Un conjunto de candidatos $C$.}
+	\KwIn{Un conjunto de elementos $S$.}
+	\KwIn{La matriz de distancias $D$.}
+	\KwOut{El candidato más lejano en el sentido de \eqref{eq:distance-elem-set}.}
+	$farthest \gets \text{primer elemento de } C$\;
+	$max\_contrib \gets \operatorname{contrib}(S,D,farthest)$\;
+	\For{$e$ \textbf{in} $C$} {
+		$contrib \gets \operatorname{contrib}(S,D,e)$\;
+		\If{$contrib > max\_contrib$} { 
+			$max\_contrib \gets contrib$\;
+			$farthest \gets e$ \tcp*{Si encuentro un candidato con mayor contribución, actualizo}
+		}
+	}
+	\Return{$farthest$}\;
+	\caption{{\sc farthest} obtiene el candidato más lejano a los elementos de $S$.}
+	\label{alg:farthest-candidate-set}
+\end{algorithm}
+
+En el caso de que $C$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
+esto no es relevante, ya que vale cualquier elemento de $C$.
+
+Ya estamos en condiciones de proporcionar una descripción del algoritmo Greedy.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{La matriz de distancias $D$.}
+	\KwIn{El entero $m$.}
+	\KwOut{Una solución válida del MDP obtenida como hemos descrito anteriormente, y su diversidad.}
+	$C \gets \{0,\ldots, n-1\}$ \tcp*{En principio los $n$ elementos son candidatos}
+	$S \gets \emptyset$ \tcp*{La solución empieza vacía}
+	$farthest \gets \operatorname{farthest}(C,C,D)$ \tcp*{Elemento más lejano al resto}
+	$C \gets C\backslash \{farthest\}$\;
+	$S \gets S\cup \{farthest\}$\;
+	\While{$|S|<m$}{
+		$farthest \gets \operatorname{farthest}(C,S,D)$ \tcp*{Elemento más lejano a los seleccionados}
+		$C \gets C\backslash \{farthest\}$\;
+		$S \gets S\cup \{farthest\}$\;
+	}
+	\Return{$S$}\;
+	\Return{$\operatorname{fitness}(S)$}\;
+	\caption{{\sc Greedy}}
+	\label{alg:greedy}
+\end{algorithm}
+
+\pagebreak
+
 \section{Desarrollo de la práctica}
 
 La implementación de los algoritmos y la experimentación con los mismos se ha llevado acabo de C++, utilizando la librería STL. 
@@ -688,9 +853,119 @@ caso.
 
 \pagebreak
 
-\subsubsection*{AGG con cruce uniforme}
+\subsubsection*{Greedy}
 
-Comenzamos con el algoritmo \textbf{AGG} con \textbf{cruce uniforme}.
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|cccc|}
+		\hline
+		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
+		MDG-a\_1\_n500\_m50 & 7610.42 & 2.85 & 0.001375\\
+		MDG-a\_2\_n500\_m50 & 7574.39 & 2.54 & 0.001293\\
+		MDG-a\_3\_n500\_m50 & 7535.96 & 2.88 & 0.001304\\
+		MDG-a\_4\_n500\_m50 & 7551.52 & 2.81 & 0.001281\\
+		MDG-a\_5\_n500\_m50 & 7540.14 & 2.77 & 0.001284\\
+		MDG-a\_6\_n500\_m50 & 7623.65 & 1.93 & 0.001278\\
+		MDG-a\_7\_n500\_m50 & 7594.62 & 2.28 & 0.0014\\
+		MDG-a\_8\_n500\_m50 & 7625.94 & 1.61 & 0.001367\\
+		MDG-a\_9\_n500\_m50 & 7547.25 & 2.87 & 0.001351\\
+		MDG-a\_10\_n500\_m50 & 7642.27 & 1.77 & 0.001893\\
+		MDG-b\_21\_n2000\_m200 & 11099332.620328 & 1.77 & 0.319017\\
+		MDG-b\_22\_n2000\_m200 & 11149879.733826 & 1.21 & 0.313017\\
+		MDG-b\_23\_n2000\_m200 & 11119613.974858 & 1.6 & 0.303374\\
+		MDG-b\_24\_n2000\_m200 & 11106996.970212 & 1.63 & 0.311278\\
+		MDG-b\_25\_n2000\_m200 & 11114220.292214 & 1.61 & 0.306411\\
+		MDG-b\_26\_n2000\_m200 & 11132801.799043 & 1.41 & 0.306542\\
+		MDG-b\_27\_n2000\_m200 & 11130608.965587 & 1.55 & 0.310595\\
+		MDG-b\_28\_n2000\_m200 & 11110673.520354 & 1.5 & 0.318429\\
+		MDG-b\_29\_n2000\_m200 & 11156328.082493 & 1.25 & 0.306362\\
+		MDG-b\_30\_n2000\_m200 & 11109767.818822 & 1.65 & 0.296905\\
+		MDG-c\_1\_n3000\_m300 & 24617010 & 1.07 & 1.501668\\
+		MDG-c\_2\_n3000\_m300 & 24547293 & 1.44 & 1.464132\\
+		MDG-c\_8\_n3000\_m400 & 43056071 & 0.88 & 2.546235\\
+		MDG-c\_9\_n3000\_m400 & 42958639 & 1.1 & 2.569214\\
+		MDG-c\_10\_n3000\_m400 & 42959794 & 1.19 & 2.566065\\
+		MDG-c\_13\_n3000\_m500 & 66493045 & 0.78 & 3.67213\\
+		MDG-c\_14\_n3000\_m500 & 66449858 & 0.79 & 3.767131\\
+		MDG-c\_15\_n3000\_m500 & 66468837 & 0.78 & 3.78725\\
+		MDG-c\_19\_n3000\_m600 & 94929882 & 0.74 & 5.183856\\
+		MDG-c\_20\_n3000\_m600 & 94979205 & 0.69 & 5.582157\\
+		\hline
+	\end{tabular}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo Greedy
+		en cada caso de estudio.}
+	\label{tab:greedy}
+\end{table}
+
+Media de los estadísticos:
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|cc|}
+		\hline
+		Desv & Tiempo (s)\\ \hline
+		1.63 & 1.19 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\pagebreak
+
+\subsubsection*{Búsqueda local}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|cccc|}
+		\hline
+		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
+		MDG-a\_1\_n500\_m50 & 7623.23 & 2.69 & 0.001809\\
+		MDG-a\_2\_n500\_m50 & 7590.18 & 2.34 & 0.001391\\
+		MDG-a\_3\_n500\_m50 & 7544.94 & 2.76 & 0.001204\\
+		MDG-a\_4\_n500\_m50 & 7576.44 & 2.49 & 0.0012\\
+		MDG-a\_5\_n500\_m50 & 7484.27 & 3.49 & 0.001308\\
+		MDG-a\_6\_n500\_m50 & 7570.96 & 2.61 & 0.001297\\
+		MDG-a\_7\_n500\_m50 & 7654.98 & 1.5 & 0.001608\\
+		MDG-a\_8\_n500\_m50 & 7623.78 & 1.64 & 0.002379\\
+		MDG-a\_9\_n500\_m50 & 7612.74 & 2.02 & 0.001494\\
+		MDG-a\_10\_n500\_m50 & 7619.52 & 2.07 & 0.001959\\
+		MDG-b\_21\_n2000\_m200 & 11181874.0007 & 1.04 & 0.099777\\
+		MDG-b\_22\_n2000\_m200 & 11167876.184 & 1.05 & 0.092492\\
+		MDG-b\_23\_n2000\_m200 & 11176568.0611 & 1.09 & 0.107634\\
+		MDG-b\_24\_n2000\_m200 & 11188223.318 & 0.91 & 0.107425\\
+		MDG-b\_25\_n2000\_m200 & 11181859.8196 & 1.01 & 0.090053\\
+		MDG-b\_26\_n2000\_m200 & 11193478.832 & 0.88 & 0.122694\\
+		MDG-b\_27\_n2000\_m200 & 11211629.6839 & 0.83 & 0.112468\\
+		MDG-b\_28\_n2000\_m200 & 11151089.4629 & 1.14 & 0.079449\\
+		MDG-b\_29\_n2000\_m200 & 11183039.6644 & 1.01 & 0.09833\\
+		MDG-b\_30\_n2000\_m200 & 11159590.8213 & 1.21 & 0.090033\\
+		MDG-c\_1\_n3000\_m300 & 24729057 & 0.62 & 0.601221\\
+		MDG-c\_2\_n3000\_m300 & 24738675 & 0.67 & 0.584432\\
+		MDG-c\_8\_n3000\_m400 & 43200330 & 0.55 & 1.264437\\
+		MDG-c\_9\_n3000\_m400 & 43157977 & 0.64 & 1.241837\\
+		MDG-c\_10\_n3000\_m400 & 43188306 & 0.66 & 1.195051\\
+		MDG-c\_13\_n3000\_m500 & 66636142 & 0.56 & 2.304507\\
+		MDG-c\_14\_n3000\_m500 & 66727635 & 0.38 & 2.430114\\
+		MDG-c\_15\_n3000\_m500 & 66808383 & 0.28 & 2.78715\\
+		MDG-c\_19\_n3000\_m600 & 95244690 & 0.41 & 3.572005\\
+		MDG-c\_20\_n3000\_m600 & 95324379 & 0.33 & 3.598978\\
+		\hline
+	\end{tabular}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Búsqueda Local
+		con Primer Mejor en cada caso de estudio.}
+	\label{tab:bs-primer-mejor}
+\end{table}
+
+Media de los estadísticos:
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|cc|}
+		\hline
+		Desv & Tiempo (s)\\ \hline
+		1.3 & 0.69 \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\subsubsection*{AGG con cruce uniforme}
 
 \begin{table}[H]
 	\centering
@@ -749,8 +1024,6 @@ Media de los estadísticos:
 
 \subsubsection*{AGG con cruce basado en posición}
 
-Comenzamos con el algoritmo \textbf{AGG} con \textbf{cruce basado en posición}.
-
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
@@ -807,8 +1080,6 @@ Media de los estadísticos:
 \pagebreak
 
 \subsubsection*{AGE con cruce uniforme}
-
-Comenzamos con el algoritmo \textbf{AGE} con \textbf{cruce uniforme}.
 
 \begin{table}[H]
 	\centering
@@ -867,8 +1138,6 @@ Media de los estadísticos:
 
 \subsubsection*{AGE con cruce basado en posición}
 
-Comenzamos con el algoritmo \textbf{AGE} con \textbf{cruce basado en posición}.
-
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
@@ -926,8 +1195,6 @@ Media de los estadísticos:
 
 \subsubsection*{AM-(10,1.0)}
 
-Comenzamos con el algoritmo \textbf{AM-(10,1.0)}.
-
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
@@ -984,8 +1251,6 @@ Media de los estadísticos:
 
 \subsubsection*{AM-(10,0.1)}
 
-Comenzamos con el algoritmo \textbf{AM-(10,0.1)}.
-
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
@@ -1041,8 +1306,6 @@ Media de los estadísticos:
 \pagebreak
 
 \subsubsection*{AM-(10,0.1mej)}
-
-Comenzamos con el algoritmo \textbf{AM-(10,0.1mej)}.
 
 \begin{table}[H]
 	\centering
@@ -1123,46 +1386,116 @@ de búsqueda local (con primer mejor) y greedy de la práctica anterior.
 
 \subsection{Análisis de resultados}
 
-TODO
+A la vista de la Tabla \ref{tab:comparativa}, intuimos que todos son algoritmos decentes para la resolución
+de este problema, aunque hay diferencias entre ellos.
 
-A la vista de la Tabla \ref{tab:comparativa}, intuimos que ambos algoritmos son adecuados para el problema.
-El algoritmo Greedy, en media, alcanza el 98.37\% de la diversidad de la mejor solución posible. Mientras que la Búsqueda Local
- alcanza el 98.7\%.
- 
- La BL resulta ser algo más efectiva, debido a que explora el espacio de soluciones con una mayor profundidad que Greedy.
- 
- En las Tablas \ref{tab:greedy} y \ref{tab:bs-primer-mejor}, observamos que la desviación es menor en los casos con mayores 
- valores de $n$ y $m$. En general, es algo superior a 2 en los 10 ejemplos del grupo MDG-a, algo inferior a 2 para Greedy y
- cercana a 1 para BL en los 10 ejemplos del grupo MDG-b y algo inferior a 1 (entorno a 0.8 para Greedy y 0.55 para BL) en los 10
-  ejemplos del grupo MDG-c. En la gran mayoría de casos, mejor la Búsqueda Local.
+Sin duda, los tiempos de los algoritmos que sólo manejan una solución (búsqueda local y greedy) en lugar de
+una población de soluciones son mucho más rápidos. El tiempo de cómputo de estos algoritmos tiene un orden
+de magnitud bastante inferior a los algoritmos basados en poblaciones. En cuanto a fitness, los algoritmos de
+la práctica 1 obtienen mejores resultados (en general) que los genéticos, pero se ven superados por los meméticos, que
+obtienen los mejores resultados entre las alternativas que consideramos.
+
+\subsubsection*{A grandes rasgos: algoritmos genéticos frente a meméticos}
+
+Respecto a la fitness conseguida, la ninguno de los \textbf{algoritmos genéticos} logra superar a la búsqueda local, y sólo
+el AGG-uniforme supera (por poco) a greedy. Esto posiblemente se deba a la falta de explotación en estos algoritmos, ya que
+no buscan explícitamente soluciones mejores, sino esperan que se generen por medio de cruces y mutaciones y se
+mantengan por la simulación que hacemos de selección natural.
+
+El problema de los algoritmos genéticos es que cuando la mejor solución es replicada en muchos de los cromosomas,
+algo que acaba pasando debido al comportamiento del algoritmo y a lo que llamamos ``convergencia del algoritmo'',
+es muy difícil que el algoritmo encuentre nuevas soluciones. Esto se debe a que el operador de cruce de dos
+soluciones idénticas genera hijos idénticos a los padres. Por tanto, es posible que rápidamente toda la población
+se vea ``invadida'' por una o varias soluciones mejores que el resto, y esto lleve a una pérdida de diversidad
+ (me refiero a diversidad genética, variedad entre soluciones) significativa. Por tanto, es posible que estos algoritmos
+ converjan (encuentren una solución buena) rápidamente y después se pasen un gran número de iteraciones trabajando con
+ soluciones muy similares hasta que una mutación o cruce fortuito mejore la fitness de la población, dando lugar
+ a un gran número de evaluaciones desperdiciadas.
+
+Para justificar esta hipótesis, resaltamos que la función que calcula los índices de la peor y segunda peor solución de la población en
+el esquema estacionario (se invoca en el Algoritmo \ref{alg:replacement-stationary}) acaba devolviendo 0 y 1 a partir
+de un número de iteraciones, y rara vez vuelve a devolver valores distintos. Esto quiere decir que encontrar soluciones
+mejores es muy difícil para el algoritmo a partir de cierto punto, y se limita a agotar las evaluaciones restantes
+con la esperanza de que alguna mutación o cruce origine una solución mejor.
+
+Podríamos pensar que nuestra implementación del reemplazamiento elitista en AGG puede ser causante de este problema
+(ver comentarios tras Algoritmo \ref{alg:replacement-agg}), pero esto no explica el problema en el caso de AGE, que
+de hecho obtiene soluciones peores en media (ligeramente mejores para el cruce basado en posición, pero peores
+para el cruce uniforme). Por tanto nuestra implementación del elitismo como mucho acentúa ligeramente este problema,
+que es intrínseco a los algoritmos genéticos.
+
+Para solventar esto, añadimos un componente de explotación como es la búsqueda local, dando lugar a los \textbf{algoritmos
+meméticos} (implementados sobre el esquema generacional con cruce uniforme, el AGG que mejores resultados obtiene).
+De esta forma, una parte de las evaluaciones se dedica a la exploración (genéticos) y otra a la explotación (búsqueda local). Este
+equilibrio los convierte en los más adecuados para el problema entre las alternativas consideradas, ya que consiguen las mejores
+fitness con la excepción del AM-(10,1.0), que es ligeramente superado por la búsqueda local.
+
+Además, estos algoritmos consiguen un
+efecto que combate el problema de la pérdida de la convergencia demasiado rápida en los algoritmos genéticos que hemos comentado
+anteriormente. Aplicar la búsqueda local a algunas soluciones separa los miembros de la población unos de otros y da lugar a un
+conjunto más variado de soluciones. Por ejemplos, si el algoritmo encuentra una buena solución que acaba copiándose multiples veces
+y desbancando al resto, aplicar búsqueda local a algunas de las copias de esa solución provocarán que el conjunto de soluciones sea
+más variado, con lo que podemos esperar cruces de soluciones más distintas y que alguno de ellos dé lugar a una solución mejor. Esta mejora
+se nota menos en AM-(10,1.0), ya que aplica búsqueda local a todos los cromosomas y no sólo a algunos, de hecho esta variante de memético
+consigue los peores resultados entre este tipo de algoritmo. El hecho de que la búsqueda local se realice con primer mejor y explorando
+los entornos en orden aleatorio, consigue que soluciones iguales se transformen en soluciones distintas, debido a que la aleatoriedad de
+exploración del entorno provoca que no se salte siempre al mismo vecino (al contrario que en la búsqueda local con mejor), esta
+ diversificación ocurre también aunque se aplique búsqueda local a todas las soluciones y no sólo a algunas, luego también mejora 
+  AM-(10,1.0). Ésto sin mencionar que la alternaiva del primer mejor consume muchísimas menos evaluaciones que la búsqueda local con mejor,
+  lo que comprobamos como trabajo voluntario en la anterior práctica.
   
-  Además, observamos que la mejora de la Búsqueda Local respecto a Greedy se acentúa en ejemplos con mayor número de elementos,
-  al menos en términos
-  relativos. Ya que una mejora del 0.25\% en la desviación cuando los algoritmos rondan desviaciones del 0.65 es bastante
-   significativo, más que mejorar en 0.5\% cuando rondan desviaciones de 1.5 ó 2. Parece que cuanto mayor es el espacio de
-   búsqueda, la mayor profundidad de exploración de BL cobra más relevancia.
-   
-  En cuanto al tiempo, nos sorprende la rapidez de la Búsqueda Local, que de media tarda un poco más de la mitad que Greedy.
+En resumen, los algoritmos genéticos carecen de explotación y pueden tener el problema de que se pierda la diversidad demasiado pronto,
+y la introducción de la búsqueda local combate ambos problemas.
+
+Respecto al tiempo, los algoritmos meméticos tardan mucho menos, ya que en la búsqueda local se dedica mucho más porcentaje del
+tiempo de cómputo a evaluar soluciones. Además, estas evaluaciones son mucho más rápidas al calcularse la fitness de forma
+factorizada.
   
-  La mayor parte del tiempo de cómputo en el algoritmo Greedy se invierte en iterar sobre los elementos no seleccionados
-   (prácticamente $n$) para encontrar el más lejano a los seleccionados. En cambio, en la Búsqueda Local sólo se itera hasta
-   encontrar un candidato mejor que el peor de los seleccionados, aunque se evalúan soluciones completas.
-   En el algoritmo Greedy se evalúa la solución completa al final.
-   
-   Otra fracción muy importante del tiempo de cómputo de Búsqueda Local se invierte también en barajar el vector de candidatos,
-   que son $n-m$, para explorar los entornos de las soluciones de forma aleatoria. Hay que barajar por cada actualización de la
-   solución.
-   
-   El motivo por que el la Búsqueda Local sea mucho más rápida es la factorización de la función de evaluación. Aunque técnicamente
-   estemos evaluando nuevas soluciones completas, ya conocemos la contribución de todos los candidatos menos el posible nuevo
-   seleccionado. Esto hace que el cálculo sea equivalente al de probar un nuevo candidato de Greedy.
-   
-   De todos modos, podemos considerar que ambos algoritmos son rápidos. Los tiempos de ejecución no han supuesto ningún impedimento
-   en el desarrollo de la práctica, han sido prácticamente despreciables.
-   
-   A continuación incluiremos gráficas de convergencia para analizar la evolución de las soluciones de BL a medida que el algoritmo
-   avanza.
-   
-\pagebreak
+\subsubsection*{Cruce uniforme frente a cruce basado en posición}
+
+El operador de cruce uniforme proporciona mejores resultados, lo que puede deberse a que palia esa pérdida de diversidad genética que
+hemos comentado. A pesar de que parecen muy similares (los dos respetan las decisiones tomadas por ambos padres), existe una diferencia
+que hace mejor al cruce uniforme.
+
+Primero, ambos cruces eligen y descartan los elementos en los que ambos padres estén de acuerdo. Después se rellena la solución de
+forma aleatoria en ambos casos, con la siguiente diferencia: la probabilidad de que un elemento sólo seleccionado por uno de los padres
+sea seleccionado por el hijo es siempre de \\ $\dfrac{\text{número de huecos por cubrir}}{\text{número de elementos seleccionados por sólo un padre}}$ en el cruce basado en posición, mientras que en el cruce uniforme esta probabilidad depende de la aportación del elemento.
+En cruce uniforme se introduce cada uno de los elementos con probabilidad 0.5, y a partir de ahí se elimina o se añade el que más aporta
+dependiendo de si faltan o sobran elementos. De esta forma, algunos hijos llevan un componente de explotación que recuerda al greedy
+ (cuando faltan elementos y se añaden los
+que más aportan), mientras que otros hijos se empeoran a propósito para no quedarnos sin variedad en las soluciones (cuando sobran
+ elementos y se eliminan los que más aportan). Este comportamiento sugiere que los hijos procedentes de cruces uniformes serán más
+variados que los basados en posición, y además habrá algunos hijos (en los que se añadan elementos de fuera) que tendrán cierta
+componente de explotación similar a la del greedy, lo que podría solventar parcialmente los problemas de los algoritmos genéticos que
+comentamos con anterioridad.
+
+Como consecuencia usamos el cruce uniforme (y el esquema generacional) para los algoritmos meméticos.
+
+Respecto al tiempo, el algoritmo de reparación puede requerir varias búsquedas del elemento que más aporta, que son bastante costosas,
+sobre todo cuando vienen de fuera de la solución. Esto provoca que sea más lento, se aprecia más en el esquema generacional.
+
+\subsubsection*{AGG frente a AGE}
+
+No hay una gran diferencia en los resultados obtendios por ambos esquemas de reemplazamiento. El esquema generacional ha resultado
+algo más efectivo en media debido a su mejor desempeño con el cruce uniforme.
+Respecto a tiempos, el esquema generacional es algo más lento cuando se utiliza el cruce uniforme. 
+
+\subsubsection*{Variantes de meméticos}
+
+Además de añadir una componente de explotación de la que carecen los algoritmos genéticos. Hemos explicado cómo la introducción de
+la búsqueda local (sobre todo con primer mejor) aumenta la diversidad entre los cromosomas, es más notable en las variantes en las que sólo
+se aplica a algunos de los cromosomas. Como consecuencia, los algoritmos meméticos proporcionan (en en media) los mejores resultados
+
+Dentro de los los meméticos, AM-(10,0.1) y AM-(10,0.1mej) ofrecen un mejor desempeño debido a esa mayor diversidad genética en las soluciones y a que
+no compensa invertir demasiadas itereaciones en mejorar todos los cromosomas, ya que cierto número de soluciones no sobreviven cada
+generación. 
+
+Dentro de sólo aplicar la búsqueda local a algunas soluciones, obtiene ligeramente mejores resultados (en media) la alternativa que la aplica
+a las mejores (a las 10\% mejores), probablemente debido a que aprovechan mejor la explotación. Mejoran aun más las soluciones con más
+fitness, lo que al cabo de varias generaciones se traduce en una mayor mejora de la población. Puesto que la búsqueda local sólo
+se realiza hasta consumir 400 evaluaciones por cromosoma, las mejores más altas tienen más posibilidades de alcanzar una mayor fitness.
+
+Respecto al tiempo, AM-(10,1.0) es el memético más rápido con diferencia, ya que dedica 10 veces más que las otras variantes a hacer
+búsqueda local, que es una forma mucho más rápida de consumir evaluaciones por la cantidad que hace y por hacerlas factorizadas.
 
 \end{document}
