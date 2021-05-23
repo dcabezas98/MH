@@ -137,7 +137,7 @@ void es(vector<vector<double> > &mat) {
   float beta=(T-Tf)/(M*T*Tf);
 
   while(exitos>0 && EVALS<LIMIT){
-
+    //cout << T << ", ";
     exitos=0;
     vecinos=0;
     while(vecinos<max_vecinos && exitos<max_exitos){
@@ -154,6 +154,7 @@ void es(vector<vector<double> > &mat) {
     }
     T=T/(1+beta*T);
   }
+  //cout << endl;
 
   t_total = clock() - t_start;
   // output: Diversidad - Tiempo

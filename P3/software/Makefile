@@ -10,7 +10,7 @@ OPT=-Wall -O2
 # Nombre de la práctica
 PRJ=practica3
 
-all: $(BIN)/ES $(BIN)/ES-proporcional $(BIN)/BMB $(BIN)/ILS
+all: $(BIN)/ES $(BIN)/ES-proporcional $(BIN)/BMB $(BIN)/ILS $(BIN)/ILS-ES $(BIN)/ILS-ES-proporcional
 
 # Compilamos
 $(BIN)/ES : $(SRC)/ES.cpp
@@ -23,6 +23,12 @@ $(BIN)/BMB : $(SRC)/BMB.cpp
 	g++ $(OPT) $^ -o $@
 	
 $(BIN)/ILS : $(SRC)/ILS.cpp
+	g++ $(OPT) $^ -o $@
+	
+$(BIN)/ILS-ES : $(SRC)/ILS-ES.cpp
+	g++ $(OPT) $^ -o $@
+	
+$(BIN)/ILS-ES-proporcional : $(SRC)/ILS-ES-proporcional.cpp
 	g++ $(OPT) $^ -o $@
 
 clean:

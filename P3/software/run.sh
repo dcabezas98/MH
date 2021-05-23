@@ -2,86 +2,68 @@
 
 # Fichero que automatiza las ejecuciones de los algoritmos
 
-# AGG uniforme
-
+# ES
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AGG-uniforme.txt
+echo "" > salidas/ES.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AGG-uniforme.txt#
-	bin/AGG-uniforme ${seeds[$i]} < $filename >> salidas/AGG-uniforme.txt
+	echo $filename >> salidas/ES.txt
+	bin/ES ${seeds[$i]} < $filename >> salidas/ES.txt
 	i=$(( $i + 1 ))
 done
 
-# AGG posición
-
+# ES-proporcional
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AGG-posicion.txt
+echo "" > salidas/ES-proporcional.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AGG-posicion.txt
-	bin/AGG-posicion ${seeds[$i]} < $filename >> salidas/AGG-posicion.txt
+	echo $filename >> salidas/ES-proporcional.txt
+	bin/ES-proporcional ${seeds[$i]} < $filename >> salidas/ES-proporcional.txt
 	i=$(( $i + 1 ))
 done
 
-# AGE uniforme
-
+# BMB
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AGE-uniforme.txt
+echo "" > salidas/BMB.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AGE-uniforme.txt
-	bin/AGE-uniforme ${seeds[$i]} < $filename >> salidas/AGE-uniforme.txt
+	echo $filename >> salidas/BMB.txt
+	bin/BMB ${seeds[$i]} < $filename >> salidas/BMB.txt
 	i=$(( $i + 1 ))
 done
 
-# AGE posición
-
+# ILS
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AGE-posicion.txt
+echo "" > salidas/ILS.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AGE-posicion.txt
-	bin/AGE-posicion ${seeds[$i]} < $filename >> salidas/AGE-posicion.txt
+	echo $filename >> salidas/ILS.txt
+	bin/ILS ${seeds[$i]} < $filename >> salidas/ILS.txt
 	i=$(( $i + 1 ))
 done
 
-# AM 10, 1.0
-
+# ILS-ES
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AM-10-1.txt
+echo "" > salidas/ILS-ES.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AM-10-1.txt
-	bin/AM-10-1 ${seeds[$i]} < $filename >> salidas/AM-10-1.txt
+	echo $filename >> salidas/ILS-ES.txt
+	bin/ILS-ES ${seeds[$i]} < $filename >> salidas/ILS-ES.txt
 	i=$(( $i + 1 ))
 done
 
-# AM 10, 0.1
-
+# ILS-ES-proporcional
 seeds=($(seq 13 6 187))
 i=0
 
-echo "" > salidas/AM-10-01.txt
+echo "" > salidas/ILS-ES-proporcional.txt
 for filename in data/*.txt; do
-	echo $filename >> salidas/AM-10-01.txt
-	bin/AM-10-01 ${seeds[$i]} < $filename >> salidas/AM-10-01.txt
-	i=$(( $i + 1 ))
-done
-
-# AM 10, 0.1mej
-
-seeds=($(seq 13 6 187))
-i=0
-
-echo "" > salidas/AM-10-01mej.txt
-for filename in data/*.txt; do
-	echo $filename >> salidas/AM-10-01mej.txt
-	bin/AM-10-01mej ${seeds[$i]} < $filename >> salidas/AM-10-01mej.txt
+	echo $filename >> salidas/ILS-ES-proporcional.txt
+	bin/ILS-ES-proporcional ${seeds[$i]} < $filename >> salidas/ILS-ES-proporcional.txt
 	i=$(( $i + 1 ))
 done

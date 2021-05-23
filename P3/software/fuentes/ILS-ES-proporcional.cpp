@@ -8,7 +8,7 @@
 using namespace std;
 
 int EVALS=0; // Llamadas a evaluación
-const int LIMIT=100000; // Límite de evaluaciones
+const int LIMIT=10000; // Límite de evaluaciones (por búsqueda)
 
 /* Parámetros del problema, fijos durante toda la ejecución*/
 unsigned n=0; // Número de posibles elementos (número de genes)
@@ -70,6 +70,23 @@ vector<int> randomSol(){
   return selected;
 }
 
+unsigned lowestContributor(vector<int> &solution, vector<vector<double> > &mat, double &min_contrib){
+
+  unsigned lowest=0;
+  double current_contrib;
+  min_contrib = singleContribution(solution, mat, solution[lowest]);
+
+  for (unsigned i=1 ; i<solution.size(); i++) {
+    current_contrib = singleContribution(solution, mat, solution[i]); // Suma distancias del elemento a los seleccionados
+    if (current_contrib < min_contrib) { // Si la suma es menor, lo reemplaza
+      min_contrib = current_contrib;
+      lowest = i;
+    }
+  }
+
+  return lowest;
+}
+
 // Clase solución
 class Solution {
   public:
@@ -91,7 +108,7 @@ class Solution {
         EVALS++;
     }
 
-    void mutate(unsigned &index_out, int &elem_in, double &delta, vector<vector<double> > &mat) { // Busca una solución en el entorno
+    void neighbor(unsigned &index_out, int &elem_in, double &delta, vector<vector<double> > &mat) { // Busca una solución en el entorno
       
       index_out = rand()%m; // Índice del elemento que saco
 
@@ -111,49 +128,82 @@ class Solution {
       s[index_out]=elem_in;
       fitness+=delta;
     }
+
+    void mutate(unsigned t, vector<vector<double> > &mat) { // Cambia la solución moderadamente
+      
+      random_shuffle(s.begin(),s.end(),rndGen); // Eliminaré los t primeros aleatoriamente
+
+      random_shuffle(elements.begin(),elements.end(),rndGen);
+
+      vector<int> new_elems;
+
+      unsigned j = 0;
+      while(new_elems.size()<t){
+        elements[j];
+        if(find(s.begin(),s.end(),elements[j])==s.end()) // Si no está ya
+          new_elems.push_back(elements[j]);
+        j++;
+      }
+
+      for (unsigned i = 0; i < t; i++){
+        s[i]=new_elems[i];
+      }
+
+      evaluate(mat);
+    }
+
+    void localSearch_es(vector<vector<double> > &mat){
+
+      unsigned exitos=1, vecinos, max_vecinos=10*m;
+      unsigned max_exitos=0.1*max_vecinos;
+      double delta;
+      unsigned index_out;
+      int elem_in;
+
+      float mu=0.3, phi=0.3;
+
+      float T=-mu*fitness/log(phi);
+
+      while(exitos>0 && EVALS<LIMIT){
+        exitos=0;
+        vecinos=0;
+        while(vecinos<max_vecinos && exitos<max_exitos){
+          neighbor(index_out, elem_in, delta, mat);
+          vecinos++;
+          if(delta>0 || randF() <= exp(delta/T)){
+            jump(index_out,elem_in,delta);
+            exitos++;
+          }
+        }
+        T=0.9*T;
+      }
+    }
 };
 
-void es(vector<vector<double> > &mat) {
-
-  unsigned exitos=1, vecinos, max_vecinos=10*m;
-  unsigned max_exitos=0.1*max_vecinos;
-  double delta;
-  unsigned index_out;
-  int elem_in;
-  double best_fitness=0;
-
-  float mu=0.3, phi=0.3;
+void ils_es(vector<vector<double> > &mat) {
+  
+  unsigned t=0.1*m;
 
   clock_t t_start, t_total;
   t_start = clock();
 
-  Solution sol(mat);
-  float T=-mu*sol.fitness/log(phi);
+  Solution best_sol(mat);
+  best_sol.localSearch_es(mat);
 
-  while(exitos>0 && EVALS<LIMIT){
-    //cout << T << ", ";
-    exitos=0;
-    vecinos=0;
-    while(vecinos<max_vecinos && exitos<max_exitos){
-      sol.mutate(index_out, elem_in, delta, mat);
-      vecinos++;
-      if(delta>0 || randF() <= exp(delta/T)){
-        sol.jump(index_out,elem_in,delta);
-        exitos++;
-
-        if (sol.fitness>best_fitness){
-          best_fitness=sol.fitness;
-        }
-      }
-    }
-    T=0.99*T;
+  for (int i=1; i<10; i++){
+    EVALS=0;
+    Solution sol(best_sol);
+    sol.mutate(t,mat);
+    sol.localSearch_es(mat);
+        
+    if(sol.fitness>best_sol.fitness)
+      best_sol=sol;
   }
-  //cout << endl;
 
   t_total = clock() - t_start;
   // output: Diversidad - Tiempo
 
-  cout << best_fitness << "\t" << (double) t_total / CLOCKS_PER_SEC << endl;
+  cout << best_sol.fitness << "\t" << (double) t_total / CLOCKS_PER_SEC << endl;
 }
 
 /******************* MAIN **********************/
@@ -172,5 +222,5 @@ int main( int argc, char *argv[] ) {
   
   cout << fixed;
   srand(stoi(argv[1])); // SEED as parameter
-  es(mat);
+  ils_es(mat);
 }
