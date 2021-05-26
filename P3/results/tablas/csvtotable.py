@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+# importing csv module
+import csv
+import sys
+# csv file name
+filename = sys.argv[1]
+
+# initializing the titles and rows list 
+fields = [] 
+rows = [] 
+  
+# reading csv file 
+with open(filename, 'r') as csvfile: 
+    # creating a csv reader object 
+    csvreader = csv.reader(csvfile) 
+      
+    # extracting field names through first row 
+    fields = next(csvreader)
+  
+    # extracting each data row one by one 
+    for row in csvreader: 
+        rows.append(row) 
+  
+    # get total number of rows 
+    # print("Total no. of rows: %d"%(csvreader.line_num)) 
+  
+# printing the structure of the table
+s = "c"
+for i in range(len(fields)-1):
+    s += "c"
+print('\\begin{tabular}{|' + s + '|}')
+print('\\hline')
+print(' & '.join(field for field in fields) + '\\\\ \hline')
+
+#  printing rows 
+for row in rows:
+    # parsing each column of a row 
+    s = row[0]
+
+    for col in row[1:5]:
+        s += ' & ' + col
+    for col in row[5:]:
+        s += ' & ' + str(round(float(col),4))
+    s += "\\\\"
+
+    print(s)
+
+# printing end of table
+print('\\hline\n\end{tabular}')
+
+
+
+
