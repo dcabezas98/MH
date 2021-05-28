@@ -118,7 +118,6 @@ class Solution {
 
       unsigned j = 0;
       while(new_elems.size()<t){
-        elements[j];
         if(find(s.begin(),s.end(),elements[j])==s.end()) // Si no está ya
           new_elems.push_back(elements[j]);
         j++;

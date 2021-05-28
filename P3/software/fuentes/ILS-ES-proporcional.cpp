@@ -139,7 +139,6 @@ class Solution {
 
       unsigned j = 0;
       while(new_elems.size()<t){
-        elements[j];
         if(find(s.begin(),s.end(),elements[j])==s.end()) // Si no está ya
           new_elems.push_back(elements[j]);
         j++;
@@ -154,7 +153,7 @@ class Solution {
 
     void localSearch_es(vector<vector<double> > &mat){
 
-      unsigned exitos=1, vecinos, max_vecinos=10*m;
+      unsigned exitos=1, vecinos, max_vecinos=10*n;
       unsigned max_exitos=0.1*max_vecinos;
       double delta;
       unsigned index_out;
@@ -175,7 +174,7 @@ class Solution {
             exitos++;
           }
         }
-        T=0.9*T;
+        T=0.5*T;
       }
     }
 };

@@ -59,7 +59,7 @@
 \SetKwInOut{Parameter}{parameter}
 
 
-\title{\Huge Metaheurísticas: Práctica 2 \\ Técnicas de Búsqueda basadas en Poblaciones \\ para el Problema de la Máxima Diversidad \vspace{10mm}}
+\title{\Huge Metaheurísticas: Práctica 3 \\ Búsquedas por Trayectorias \\ para el Problema de la Máxima Diversidad \vspace{10mm}}
 
 \author{\huge David Cabezas Berrido \vspace{10mm} \\
 	\huge 20079906D \vspace{10mm} \\  
@@ -113,10 +113,6 @@ para atacarlo.
 Los algoritmos para resolver este problema tendrán como entradas la matriz $D$ ($n\times n$) y el valor $m$. La salida será un contenedor
 (vector, conjunto, \ldots) con los índices de los elementos seleccionados, y no un vector binario como el que utilizamos para la formulación.
  En nuestro caso (algoritmos implementados en esta práctica) utilizaremos vectores de enteros para representar soluciones.
-
-\textbf{Nota:} Al contrario de lo recomendado, mantenemos la representación entera (vector de enteros con los elementos seleccionados) en lugar de cambiar a la binaria para las soluciones.
-Esto conlleva la traducción de los operadores a la nueva representación. Sin embargo, aunque la descripción detallada de los operadores es
-algo más compleja, entender su funcionamiento es bastante más fácil con la representación entera. 
 
 La evaluación de la calidad de una solución se hará
 sumando la contribución de cada uno de los elementos, y dividiremos la evaluación en dos funciones. En lugar de calcular la función evaluación como en
@@ -177,13 +173,7 @@ Esta expresión nos será de utilidad para la implementación de los algoritmos.
 
 Gracias a la existencia del Algoritmo \ref{alg:contrib}, podemos obtener esta expresión como $\operatorname{contrib}(S,D,e)$.
 
-En esta práctica, implementamos cuatro variantes de algoritmos genéticos (dos generacionales y dos estacionarios) y tres variantes
-de meméticos. Compararemos estos algoritmos entre sí y con los algoritmos Greedy y Búsqueda Local con Primer Mejor de la práctica anterior.
-
-Para los pseudocódigos que siguen, suponemos la matriz de distancias $D$ y los parámetros $n$ y $m$ accesibles.
-El conjunto de todos los elementos es el $\{0,\ldots,n-1\}$, para cuando nos refiramos a elementos de fuera de un subconjunto de ellos.
-
-Inicializamos la población con soluciones aleatorias, usamos la siguiente función.
+TODO
 
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
@@ -199,421 +189,13 @@ Inicializamos la población con soluciones aleatorias, usamos la siguiente funci
 	\label{alg:randomsol}
 \end{algorithm}
 
-\subsection{Operadores de los algoritmos genéticos}
-
-Usaremos dos operadores de cruce distintos. El primero es el \textbf{cruce uniforme}, que dados dos padres mantiene los elementos
-seleccionados por ambos (intersección) y por ninguno. Los elementos que sólo son seleccionados por uno de los padres se introducen
-con un 0.5 de probabilidad, pudiendo dar lugar a soluciones con más de $m$ elementos seleccionados. Es por ello que se aplica un
-\textbf{operador de reparación} posteriormente, que elimina (cuando sobran elementos) o añade (cuando faltan) siempre el elemento
-que más contribuye (dentro o fuera de la solución, según haya que eliminar o añadir).
-
-Cuando escribimos operaciones de conjuntos sobre vectores entendemos que no es relevante el orden
-de los elementos. Con la unión entre un vector y un elemento, podemos añadir el elemento al final, por ejemplo.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de índices $S$.}
-	\KwOut{El vector $S$ reparado (no lo devuelve, modifica el existente).}
-	\While{$|S|>m$}{
-		$g\gets\text{Elemento de $S$ que maximiza $\operatorname{contrib}(S,D,g)$}$\;
-		$S\gets S\backslash\{g\}$\;
-	}
-	\While{$|S|<m$}{
-		$g\gets\text{Elemento de fuera de $S$ que maximiza $\operatorname{contrib}(S,D,g)$}$\;
-		$S\gets S\cup\{g\}$\;
-	}
-	\caption{{\sc Repair} repara un vector solución que puede no contener $m$ elementos (puede ser no válida).}
-	\label{alg:reparacion}
-\end{algorithm}
-
-A continuación, proporcionamos el pseudocódigo del algoritmo de cruce uniforme.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Dos vectores de índices $S_1,S_2$.}
-	\KwOut{Un vector solución $S$ (hijo).}
-	$S\gets\emptyset$\;
-	\ForEach{$e$ in $0,\ldots,n-1$}{
-		\If{$e\in S_1$ and $e\in S_2$}{
-			$S\gets S\cup\{e\}$\;
-		}
-		\ElseIf{$e\notin S_1$ and $e\notin S_2$}{
-			No se incluye el elemento (no se hace nada).
-		}
-		\Else{
-			Con probabilidad 0.5: $S\gets S\cup\{e\}$\;
-		}
-	}
-	$\operatorname{repair}(S)$ \tcp*{La solución puede no ser factible.}
-	\Return{$S$}
-	\caption{{\sc UniformCross} genera un hijo cruzando dos padres.}
-	\label{alg:uniform-cross}
-\end{algorithm}
-
-El otro operador de cruce que consideramos es el cruce basado en posición. Este operador respeta los seleccionados y descartados
-por ambos padres, y completa con un subconjunto aleatorio de los elementos que sólo están seleccionados por uno de los padres hasta
-obtener un vector con $m$ elementos seleccionados.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Dos vectores de índices $S_1,S_2$.}
-	\KwOut{Un vector solución $S$ (hijo).}
-	$S\gets\emptyset$\;
-	$W\gets\emptyset$ \tcp*{Candidatos a completar la solución.}
-	\ForEach{$e$ in $0,\ldots,n-1$}{
-		\If{$e\in S_1$ and $e\in S_2$}{
-			$S\gets S\cup\{e\}$\;
-		}
-		\ElseIf{$e\notin S_1$ and $e\notin S_2$}{
-			No se incluye el elemento (no se hace nada).
-		}
-		\Else{
-			$W\gets W\cup\{e\}$\;
-		}
-	}
-	$W \gets \operatorname{shuffle}(W)$\;
-	\While{$|S|<m$}{
-		$e\gets W[0]$ \tcp*{Primer elemento de $W$, es aleatorio.}
-		$S\gets S\cup\{e\}$\;
-		$W\gets W\backslash\{e\}$\;
-	}
-	\Return{$S$}
-	\caption{{\sc PositionCross} genera un hijo cruzando dos padres.}
-	\label{alg:position-cross}
-\end{algorithm}
-
-Con la implementación que hemos hecho, ambos operadores sólo generan un hijo, por lo que llamaremos a estos operador dos veces cada vez que crucemos dos padres. Sería más eficiente generar dos hijos en cada ejecución para aprovechar parte de los cálculos.
-
-Necesitamos también un operador de mutación. Éste saca un elemento aleatorio de una solución y mete un elemento aleatorio de fuera.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector solución $S$.}
-	\KwOut{La solución $S$ modificada, la modifica en lugar de devolverla.}
-	$e_{out}\gets\text{numero aleatorio entre $0$ y $m-1$}$ \tcp*{Posición del elemento a eliminar.}
-	$e_{in}\gets\text{elemento aleatorio (número aleatorio entre $0$ y $n-1$)}$\;
-	\While{$e_{in}\in S$}{
-		$e_{in}\gets\text{elemento aleatorio}$ \tcp*{Forzamos que sea de fuera.}
-	}
-	$S[e_{out}]\gets e_{in}$\tcp*{Sustituimos el elemento a eliminar por el nuevo.}
-	\caption{{\sc Mutate} modifica una solución cambiando un elemento.}
-	\label{alg:mutate}
-\end{algorithm}
-
-Por último, necesitamos un operador de selección para elegir a los padres en cada iteración. Se hace uno de torneos binarios, donde se elige el mejor de dos soluciones aleatorias.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{El índice de la mejor solución entre dos elegidas aleatoriamente.}
-	$i_1\gets\text{número aleatorio entre 0 y $|P|$}$\;
-	$i_2\gets\text{número aleatorio entre 0 y $|P|$}$\;
-	$sol_1\gets P[i_1]$\;
-	$sol_2\gets P[i_2]$\;
-	\tcc{$sol.fitness$ almacena el resultado de $\operatorname{fitness}(sol)$ por razones de eficiencia.}
-	\If{$sol_1.fitness > sol_2.fitness$}{
-		\Return{$i_1$}
-	}
-	\Else{
-		\Return{$i_2$}
-	}
-	\caption{{\sc BinTournament} devuelve el índice de la mejor de dos soluciones aleatorias.}
-	\label{alg:bin-tournament}
-\end{algorithm}
-
-El uso de esta selección para reemplazar la población dependerá del esquema (generacional o estacionario).
-
-\subsection{Búsqueda local para los algoritmos meméticos}
-
-Proporcionamos la implementación del algoritmo de búsqueda local que usaremos en los algoritmos meméticos. Modifica una solución
-saltando al primer mejor vecino explorado hasta consumir un cierto número de evaluaciones o alcanzar un máximo local.
-
-Suponemos accesibles las variables globales $LIMIT=100000$ (límite total de evaluaciones), $EVALS$ (evaluaciones totales hasta el momento, comienza
-a 0)
-y $limit=400$ (límite de evaluaciones en una búsqueda local).
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Solución de partida $S$.}
-	\KwOut{La solución $S$ se modifica (no se devuelve) con varias iteraciones de búsqueda local.}
-	$E \gets \{0,\ldots,n-1\}$ \tcp*{Vector con todos los elementos.}
-	$evals \gets 0$\;
-	$carryon \gets true$\;
-	\While{carryon}{
-		$carryon \gets false$\;
-		$lowest\gets \text{indice del elemento de $S$ que menos contribuye, minimiza $\operatorname{contrib}(S,D,S[lowest])$}$\;
-		%$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$
-		$E \gets \operatorname{shuffle}(E)$ \tcp*{Para explorar los posibles vecinos en orden aleatorio.}
-		\For{$e$ \textbf{in} $E$} {
-			\If{$e\in S$}{
-				continue \tcp*{Si ya está escogido, no lo cuento.}
-			}
-			$contrib \gets \operatorname{contrib}(S,D,e)-D[e,S[lowest]]$ \tcp*{Contribución a la solución sin el elemento a sustituir.}
-			$EVALS \gets EVALS+1$ \tcp*{He evaludado una posible solución.}
-			$evals \gets evals+1$\;
-			\If{$contrib > min\_contrib$} { 
-				$S.fitness \gets S.fitness + contrib - min\_contrib$ \tcp*{Fitness de la nueva solución}
-				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
-				$S[lowest]\gets e$ \tcp*{Saltamos a la nueva solución}
-			}
-			\If{$carryon==true$ or $EVALS\geq LIMIT$ or $evals\geq limit$} { 
-				break  \tcp*{Se cumple alguna de las condiciones de parada}
-			}
-		}
-	}
-	\caption{{\sc LocalSearch} modifica una solución con varias iteraciones de búsqueda local con primer mejor.}
-	\label{alg:local-search}
-\end{algorithm}
+TODO
 
 \pagebreak
 
 \section{Descripción de los algoritmos}
 
-Distinguimos dos clases de algoritmos genéticos, según el esquema de reemplazamiento.
-
-\subsection{Algoritmo genético generacional (AGG)}
-
-Para seleccionar la nueva población se realizan tantos torneos binarios como el tamaño de la población. Para conservar la mejor solución
- (elitismo), ésta sustituye a la peor en caso de no sobrevivir a los torneos.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{La población $P'$ de padres para la siguiente generación. No se devuelve, se modifica P.}
-	$P'\gets\emptyset$\;
-	$best\gets\text{índice de la solución de $P$ con mayor fitness}$\;
-	$elitism\gets false$ \tcp*{Para contemplar si sobrevive la mejor.}
-	\While{$|P'|<|P|$}{
-		$i\gets\operatorname{BinTournament}(P)$\;
-		$P'\gets P'\cup\{P[i]\}$\;
-		\If{$i=best$}{
-			$elitism\gets true$ \tcp*{Ha sobrevivido.}
-		}
-	}
-	\If{$elitism=false$}{
-		$i\gets\text{índice de la solución de $P'$ con peor fitness}$\;
-		$P'[i]\gets P[best]$\;
-	}
-	$P\gets P'$\;
-	\caption{{\sc Replacement} devuelve la población de padres para la siguiente generación.}
-	\label{alg:replacement-agg}
-\end{algorithm}
-
-Hay que tener en cuenta que comparar si es la mejor solución por índice y no por fitness fuerza a que si hay soluciones repetidas
-(ocurrirá tras varias iteraciones del algoritmo, cada vez más), se fuerza a salvar una copia concreta de la solución. Esto le da ventaja
-a la mejor solución respecto a las demás, ya que puede salvarse y además copiarse una vez más.
-Con esta comparación, se acelera la convergencia del algoritmo pero se reduce la variedad de soluciones, aunque
-no en gran medida.
-
-Para cruzar la población (de padres), se calcula el número esperado de cruces, $25\cdot\text{probabilidad de cruce}=18$ (nos quedamos
-con un entero). El valor 25 proviene del número de parejas que se forman con la población de 50 cromosomas. Como el operador de
-reemplazamiento construye una nueva población de padres aleatorios, podemos simplemente cruzar primero con segundo, tercero y cuarto, etc. (hasta llegar a 18 cruces).
-El cruce de dos soluciones puede ser uniforme o posicional, se estudian las dos alternativas.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{En la población $P$, se sustituyen cada pareja de padres por sus hijos.}
-	$n2cross=n\_chromosomes\cdot prob_{cross}$ \tcp*{Doble del número esperado de cruces.}
-	\For{$i=0,2,4,\dots,n2cross-1$}{
-		$child_1\gets \operatorname{Croos}(P[i],P[i+1])$\;
-		$child_2\gets \operatorname{Croos}(P[i],P[i+1])$\;
-		$P[i]\gets child_1$\;
-		$P[i+1]\gets child_2$\;
-	}
-	\caption{{\sc Cross} cruza los padres de la población y los sustituye por los hijos.}
-	\label{alg:cross-generational}
-\end{algorithm}
-
-Para la mutación, se calcula el número esperado de mutaciones. En este caso, el número de mutaciones no depende de $n$ y $m$, siempre
-es el 10\% del número de cromosomas, 5. Tantas veces como el número esperado de mutaciones, se elige una solución aleatoria, y esta
-muta un gen aleatorio como hemos descrito antes. El número de genes coincide con el parámetro $n$ del problema (debemos tener en cuenta
-que los parámetros que nos proponen corresponden a la representación binaria).
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{En la población $P$ mutan algunas soluciones, no se devuelve nada.}
-	$mutations=n\_chromosomes\cdot n\_genes\cdot prob_{mut}$ \tcp*{Donde $prob_{mut}=0.1\cdot n\_genes$.}
-	\For{$i=0,1,\dots,mutations-1$}{
-		$j\gets\text{número aleatorio entre $0$ y $|P|-1$}$ \tcp*{Índice de una solución aleatoria.}
-		$\operatorname{mutate(P[j])}$ \tcp*{La solución muta un gen aleatorio.}
-	}
-	\caption{{\sc Mutate} muta algunas soluciones de la población.}
-	\label{alg:mutate-generational}
-\end{algorithm}
-
-El esquema de reemplazamiento del algoritmo genético generacional es el siguiente.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
-	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias generaciones.}
-	\While{$EVAlS<LIMIT$}{
-		$\operatorname{cross}(P)$\;
-		$\operatorname{mutate}(P)$\;
-		$\operatorname{evaluate}(P)$\;
-		$\operatorname{replacement}(P)$\;
-	}
-	\caption{{\sc AGG}.}
-	\label{alg:generational}
-\end{algorithm}
-
-En evaluación, se actualiza el fitness de cada solución, que se almacena por razones de eficiencia. Se usa un flag para evitar reevaluar soluciones
-que no cambien de una generación a otra. El flag está en ``actualizado'' para nuevas soluciones aleatorias y productos de cruces y
-mutaciones. Como la comprobación del límite de evaluaciones no se realiza en mitad de las iteraciones, podemos pasarnos del límite.
-Sin embargo, el número máximo de evaluaciones por iteración es de 41 (36 hijos + 5 mutaciones), por lo que como mucho llegaremos a
-100040 evaluaciones, lo que no supone mucho ni en tiempo ni en desempeño del algoritmo.
-
-\subsection{Algoritmo genético estacionario (AGE)}
-
-En el esquema estacionario, sólo dos soluciones se cruzan y puden mutar en cada iteración. Los dos padres se eligen con dos
-torneos binarios.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{Índices de dos padres.}
-	$p_1\gets\operatorname{BinTournament}(P)$\;
-	$p_2\gets\operatorname{BinTournament}(P)$\;
-	\Return{$p_1,p_2$}\;
-	\caption{{\sc Selection} devuelve los índices de dos padres, que selecciona por torneo binario.}
-	\label{alg:selection-stationary}
-\end{algorithm}
-
-Dichos padres se cruzan para formar dos hijos, por cruce uniforme o basado en posición.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwIn{Los índices de los padres: $p_1$ y $p_2$.}
-	\KwOut{Dos nuevas soluciones (hijos).}
-	$child_1\gets\operatorname{cross}(P[p_1],P[p_2])$\;
-	$child_2\gets\operatorname{cross}(P[p_1],P[p_2])$\;
-	\Return{$child_1,child_2$}\;
-	\caption{{\sc Cross} devuelve dos soluciones, producto del cruce de los padres.}
-	\label{alg:cross-stationary}
-\end{algorithm}
-
-Se decide si mutan los hijos (cada uno con probabilidad 0.1, para preservar la esperanza de 0.2 mutaciones por iteración), y posteriormente sustituyen a las dos peores soluciones de la problación (siempre que las superen).
-De las 4 soluciones (2 peores + 2 hijos), debemos quedarnos con las 2 mejores. Esto lo conseguimos con la siguiente función.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwIn{Los dos hijos: $child_1$ y $child_2$.}
-	\KwOut{Modifica la población $P$ para sustituir las peores soluciones por los hijos (si estos las superan).}
-	$w_1,w_2\gets\text{índices de la peor y segunda peor soluciones de $P$ respectivamente}$\;
-	\If{$child_1.fitness>P[w_2].fitness$}{
-		$P[w_1]\gets P[w_2]$\;
-		$P[w_2]\gets child_1$\;
-	}
-	\ElseIf{$child_1.fitness>P[w_1].fitness$}{
-		$P[w_1]\gets child_1$\;
-	}
-	\If{$child_2.fitness>P[w_1].fitness$}{
-		$P[w_1]\gets child_2$\;
-	}
-	\caption{{\sc Replacement} se queda con las dos mejores de 4 soluciones: $\text{2 peores} + \text{2 hijos}$.}
-	\label{alg:replacement-stationary}
-\end{algorithm}
-
-El ciclo de evolución queda de la siguiente forma.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
-	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias iteraciones.}
-	Se evalúan todas las soluciones (50 evaluaciones), se incrementa $EVALS$ en 50\;
-	\While{$EVAlS<LIMIT$}{
-		$p_1,p_2\gets\operatorname{selection}(P)$\;
-		$\operatorname{cross}(P,p_1,p_2)$\;
-		$child_1$ muta con probabilidad 0.1\;
-		$child_2$ muta con probabilidad 0.1\;
-		$\operatorname{evaluate}(child_1)$\;
-		$\operatorname{evaluate}(child_2)$\;
-		$EVALS\gets EVALS+2$\;
-		$\operatorname{replacement}(P,child_1,child_2)$\;
-	}
-	\caption{{\sc AGE}.}
-	\label{alg:stationary}
-\end{algorithm}
-
-\subsection{Algoritmos meméticos (AM)}
-
-Los algoritmos meméticos combinan el esquema evolutivo generacional (con cruce uniforme) con el algoritmo de búsqueda local. Ya hemos mostrado la implementación
-de búsqueda local a nivel de solución. Ahora mostraremos cómo se aplica la búsqueda local a nivel de población, lo que diferencia las
-distintas variantes de meméticos.
-
-En la primera versión, AM-(10,1.0), se aplica búsqueda local cada 10 generaciones sobre todos los cromosomas de la población.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{La población $P$ (se modifica, no se devuelve) después de que todas las soluciones mejoren con búsqueda local.}
-	\ForEach{$sol$ in $P$}{
-		$\operatorname{LocalSearch}(sol)$\;
-	}
-	\caption{{\sc LocalSearch} de AM-(10,1.0).}
-	\label{alg:am-10-1}
-\end{algorithm}
-
-En la versión AM-(10,0.1), se aplica búsqueda local a cada cromosoma con probabilidad 0.1 cada 10 generaciones.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{La población $P$ (se modifica, no se devuelve) después de que algunas de las soluciones mejoren con búsqueda local.}
-	\ForEach{$sol$ in $P$}{
-		Con probabilidad 0.1: $\operatorname{LocalSearch}(sol)$\;
-	}
-	\caption{{\sc LocalSearch} de AM-(10,0.1).}
-	\label{alg:am-10-01}
-\end{algorithm}
-
-En la versión AM-(10,0.1mej), se aplica búsqueda local a las 5 mejores soluciones (mejor 10\% de la población).
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población).}
-	\KwOut{La población $P$ (se modifica, no se devuelve) después de que las 5 mejores soluciones mejoren con búsqueda local.}
-	$q\gets\emptyset$ \tcp*{Cola con prioridad donde almacenaré parejas (fitness,índice), se ordenan por mayor fitness.}
-	\ForEach{$i=0,\ldots,|P|-1$}{
-		$q\gets q\cup\{(P[i].fitness,i)\}$\;
-	}
-	$k\gets 0.1\cdot n\_chromosomes$ \tcp*{Sacaré los 10\% mejores (5).}
-	\For{$j=0,\ldots,k-$1}{
-		$\operatorname{LocalSearch}(P[q.top.second])$\;
-		$q.pop$\;
-	}
-	\caption{{\sc LocalSearch} de AM-(10,0.1mej).}
-	\label{alg:am-10-01mej}
-\end{algorithm}
-
-El cuerpo principal de los algoritmos meméticos es el siguiente, la función LocalSearch (a nivel de población) es lo que diferencia
-las distintas alternativas.
-
-\begin{algorithm}[H]
-	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
-	\KwIn{Un vector de soluciones $P$ (población) inicializado con soluciones aleatorias.}
-	\KwOut{La población $P$ (se modifica, no se devuelve) evoluciona tras varias iteraciones.}
-	Se evalúan todas las soluciones (50 evaluaciones), se incrementa $EVALS$ en 50\;
-	$generation\gets 0$\;
-	\While{$EVAlS<LIMIT$}{
-		$\operatorname{cross}(P)$\;
-		$\operatorname{mutate}(P)$\;
-		$\operatorname{evaluate}(P)$\;
-		$\operatorname{replacement}(P)$\;
-		
-		$generation\gets generation+1$\;
-		
-		\If{$generation \operatorname{mod} 10 == 0$}{
-			$\operatorname{LocalSearch}(P)$\;
-		}
-	}
-	\caption{{\sc AM}.}
-	\label{alg:am}
-\end{algorithm}
+TODO
 
 \pagebreak
 
@@ -622,6 +204,9 @@ las distintas alternativas.
 Procedemos con la descripción del algoritmo de Búsqueda Local que se nos ha presentado en el seminario. 
 Este algoritmo utiliza la técnica del Primer Mejor, en la que se van generando soluciones en el entorno de la actual y se
 salta a la primera con mejor evaluación. Para la implementación del algoritmo, necesitamos distintos elementos.
+
+Este algoritmo se implementó en la práctica 1, y utiliza conjuntos de enteros en lugar de vectores para representar
+las soluciones.
 
 El primer elemento, es una función para generar una solución aleatoria de partida. Simplemente se eligen $m$ elementos 
 diferentes del conjunto. Por comodidad, también calculamos el complementario.
@@ -727,6 +312,8 @@ Cabe destacar que en este algoritmo se calcula la fitness factorizando. Esto ace
 Para comparar la eficacia de cada algoritmos, lo compararemos con el algoritmo \textbf{Greedy}. El algoritmo consiste en empezar por el
 elemento más lejano al resto e ir añadiendo el elemento que más contribuya hasta completar una solución válida.
 
+Este algoritmo también se implementó en la primera práctica y utiliza un conjunto de enteros.
+
 Como elemento más lejano al resto se toma el elemento cuya suma de las distancias al resto sea la mayor. Y en cada iteración se introduce el elemento
 cuya suma de las distancias a los seleccionados sea mayor. Es decir, utilizamos la definición de \eqref{eq:distance-elem-set}.
 
@@ -787,8 +374,8 @@ Ya estamos en condiciones de proporcionar una descripción del algoritmo Greedy.
 La implementación de los algoritmos y la experimentación con los mismos se ha llevado acabo de C++, utilizando la librería STL. 
 Para representar la soluciones hemos hecho uso del tipo \texttt{vector}.
 
-La mayoría de operadores (mutación, cruce, búsqueda local) se implementan a nivel de solución y a nivel de población para abstraer
-las operaciones y que el código sea más reciclable, generalmente como métodos de clase.
+La mayoría de operadores (mutación, generación de vecino, salto, búsqueda local) se implementan como métodos de una 
+clase Solucion.
 
 Para medir los tiempos de ejecución se utiliza la función \texttt{clock} de la librería \texttt{time.h}.
 
@@ -810,13 +397,7 @@ A continuación detallamos instrucciones para lanzar los ejecutables.
 Tenemos los siguientes ejecutables:
 
 \begin{itemize}
-	\item \textbf{AGG-uniforme:} Implementación del algoritmo genético generacional con cruce uniforme.
-	\item \textbf{AGG-posicion:} Implementación del algoritmo genético generacional con cruce basado en posición.
-	\item \textbf{AGE-uniforme:} Implementación del algoritmo genético estacionario con cruce uniforme. 
-	\item \textbf{AGE-posicion:} Implementación del algoritmo genético estacionario con cruce basado en posición.
-	\item \textbf{AM-10-1:} Implementación del algoritmo memético (genético generacional con cruce uniforme combinado con búsqueda local) que aplica búsqueda local a todos los cromosomas cada 10 iteraciones.
-	\item \textbf{AM-10-01:} Implementación del algoritmo memético que aplica búsqueda local a cada cromosoma con probabilidad 0.1 cada 10 iteraciones.
-	\item \textbf{AM-10-01mej:} Implementación del algoritmo memético que aplica búsqueda local a los ``0.1 $\times$ número de cromosomas'' mejores cromosomas cada 10 iteraciones.
+\item TODO
 \end{itemize}
 
 Todos ellos devuelven la evaluación de la solución obtenida y el tiempo de ejecución por salida estándar.
@@ -825,7 +406,7 @@ Todos los archivos reciben la semilla como parámetro.
 
 Además, todos los archivos de búsqueda local reciben la semilla como parámetro. Ejemplo:
 \begin{verbatim}
-bin/AGG-uniforme 197 < datos/MDG-a_1_n500_m50.txt >> salidas/AGG-uniforme.txt
+bin/ES 197 < datos/MDG-a_1_n500_m50.txt >> salidas/ES.txt
 \end{verbatim}
 
 En la carpeta \textbf{software} se incluye el script usado para lanzar todas las ejecuciones, \texttt{run.sh}. También se incluye
@@ -952,7 +533,7 @@ Media de los estadísticos:
 
 \pagebreak
 
-\subsubsection*{Búsqueda local}
+\subsubsection*{Búsqueda Local}
 
 \begin{table}[H]
 	\centering
@@ -1007,48 +588,49 @@ Media de los estadísticos:
 	\end{tabular}
 \end{table}
 
-\subsubsection*{AGG con cruce uniforme}
+\pagebreak
+
+\subsubsection*{Enfriamiento Simulado (Cauchy Modificado)}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7707.95 & 1.61 & 2.090093\\
-		MDG-a\_2\_n500\_m50 & 7638.38 & 1.71 & 2.107509\\
-		MDG-a\_3\_n500\_m50 & 7606.73 & 1.97 & 2.000252\\
-		MDG-a\_4\_n500\_m50 & 7572.09 & 2.55 & 1.9783\\
-		MDG-a\_5\_n500\_m50 & 7578.8 & 2.27 & 2.056744\\
-		MDG-a\_6\_n500\_m50 & 7595.96 & 2.29 & 2.003538\\
-		MDG-a\_7\_n500\_m50 & 7657.02 & 1.48 & 2.028599\\
-		MDG-a\_8\_n500\_m50 & 7573.56 & 2.29 & 1.996006\\
-		MDG-a\_9\_n500\_m50 & 7624.78 & 1.87 & 2.047315\\
-		MDG-a\_10\_n500\_m50 & 7559.2 & 2.84 & 2.024727\\
-		MDG-b\_21\_n2000\_m200 & 11121197.565411 & 1.58 & 47.359572\\
-		MDG-b\_22\_n2000\_m200 & 11140356.96411 & 1.3 & 46.470377\\
-		MDG-b\_23\_n2000\_m200 & 11122989.485668 & 1.57 & 47.038308\\
-		MDG-b\_24\_n2000\_m200 & 11093069.977321 & 1.75 & 47.933936\\
-		MDG-b\_25\_n2000\_m200 & 11160806.463414 & 1.2 & 46.681582\\
-		MDG-b\_26\_n2000\_m200 & 11128960.812991 & 1.45 & 46.708763\\
-		MDG-b\_27\_n2000\_m200 & 11151190.815364 & 1.37 & 46.649915\\
-		MDG-b\_28\_n2000\_m200 & 11133921.949524 & 1.29 & 44.099666\\
-		MDG-b\_29\_n2000\_m200 & 11105148.429167 & 1.7 & 43.791342\\
-		MDG-b\_30\_n2000\_m200 & 11115025.068757 & 1.61 & 44.419215\\
-		MDG-c\_1\_n3000\_m300 & 24606743 & 1.11 & 142.839721\\
-		MDG-c\_2\_n3000\_m300 & 24604945 & 1.21 & 142.000313\\
-		MDG-c\_8\_n3000\_m400 & 43018354 & 0.96 & 201.906448\\
-		MDG-c\_9\_n3000\_m400 & 43010797 & 0.98 & 199.613779\\
-		MDG-c\_10\_n3000\_m400 & 42986441 & 1.13 & 203.129084\\
-		MDG-c\_13\_n3000\_m500 & 66338876 & 1.01 & 244.070216\\
-		MDG-c\_14\_n3000\_m500 & 66332815 & 0.97 & 242.688824\\
-		MDG-c\_15\_n3000\_m500 & 66450927 & 0.81 & 248.337499\\
-		MDG-c\_19\_n3000\_m600 & 94857517 & 0.81 & 293.797158\\
-		MDG-c\_20\_n3000\_m600 & 94808873 & 0.87 & 303.61342\\
+		MDG-a\_1\_n500\_m50 & 7670.07 & 2.09 & 0.006072\\
+		MDG-a\_2\_n500\_m50 & 7605.52 & 2.14 & 0.00734\\
+		MDG-a\_3\_n500\_m50 & 7640.15 & 1.54 & 0.004435\\
+		MDG-a\_4\_n500\_m50 & 7506.45 & 3.39 & 0.002631\\
+		MDG-a\_5\_n500\_m50 & 7595.3 & 2.06 & 0.007672\\
+		MDG-a\_6\_n500\_m50 & 7513.32 & 3.35 & 0.002595\\
+		MDG-a\_7\_n500\_m50 & 7531.44 & 3.09 & 0.00346\\
+		MDG-a\_8\_n500\_m50 & 7609.81 & 1.82 & 0.007511\\
+		MDG-a\_9\_n500\_m50 & 7654.97 & 1.48 & 0.006011\\
+		MDG-a\_10\_n500\_m50 & 7707.51 & 0.94 & 0.012247\\
+		MDG-b\_21\_n2000\_m200 & 11155738.985299 & 1.28 & 0.186285\\
+		MDG-b\_22\_n2000\_m200 & 11164122.435074 & 1.09 & 0.184283\\
+		MDG-b\_23\_n2000\_m200 & 11177722.312113 & 1.08 & 0.180047\\
+		MDG-b\_24\_n2000\_m200 & 11124330.872795 & 1.48 & 0.175191\\
+		MDG-b\_25\_n2000\_m200 & 11181796.14402 & 1.01 & 0.175225\\
+		MDG-b\_26\_n2000\_m200 & 11157826.838857 & 1.19 & 0.176321\\
+		MDG-b\_27\_n2000\_m200 & 11165835.734422 & 1.24 & 0.177808\\
+		MDG-b\_28\_n2000\_m200 & 11119034.565327 & 1.43 & 0.174686\\
+		MDG-b\_29\_n2000\_m200 & 11163768.720372 & 1.18 & 0.175868\\
+		MDG-b\_30\_n2000\_m200 & 11148372.956175 & 1.31 & 0.174758\\
+		MDG-c\_1\_n3000\_m300 & 24637456 & 0.99 & 0.418843\\
+		MDG-c\_2\_n3000\_m300 & 24595823 & 1.24 & 0.416247\\
+		MDG-c\_8\_n3000\_m400 & 43042008 & 0.91 & 0.515977\\
+		MDG-c\_9\_n3000\_m400 & 43044732 & 0.91 & 0.51509\\
+		MDG-c\_10\_n3000\_m400 & 43031426 & 1.02 & 0.514451\\
+		MDG-c\_13\_n3000\_m500 & 66556889 & 0.68 & 0.602169\\
+		MDG-c\_14\_n3000\_m500 & 66646003 & 0.5 & 0.598817\\
+		MDG-c\_15\_n3000\_m500 & 66693908 & 0.45 & 0.605126\\
+		MDG-c\_19\_n3000\_m600 & 95013094 & 0.65 & 0.672743\\
+		MDG-c\_20\_n3000\_m600 & 94941193 & 0.73 & 0.664133\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AGG con cruce uniforme
-		en cada caso de estudio.}
-	\label{tab:agg-uniforme}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Enfriamiento Simulado con Cauchy modificado en cada caso de estudio.}
+	\label{tab:es}
 \end{table}
 
 Media de los estadísticos:
@@ -1057,55 +639,54 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		 1.52 & 90.12 \\
+		 1.41 & 0.25 \\
 		\hline
 	\end{tabular}
 \end{table}
 
 \pagebreak
 
-\subsubsection*{AGG con cruce basado en posición}
+\subsubsection*{Enfriamiento Simulado (Proporcional)}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7524.33 & 3.95 & 1.930193\\
-		MDG-a\_2\_n500\_m50 & 7568.98 & 2.61 & 1.939586\\
-		MDG-a\_3\_n500\_m50 & 7541.52 & 2.81 & 1.945953\\
-		MDG-a\_4\_n500\_m50 & 7521.62 & 3.2 & 1.923407\\
-		MDG-a\_5\_n500\_m50 & 7539.26 & 2.78 & 1.952541\\
-		MDG-a\_6\_n500\_m50 & 7538.96 & 3.02 & 1.938942\\
-		MDG-a\_7\_n500\_m50 & 7450.6 & 4.13 & 1.937036\\
-		MDG-a\_8\_n500\_m50 & 7564.71 & 2.4 & 1.939857\\
-		MDG-a\_9\_n500\_m50 & 7603.57 & 2.14 & 1.930254\\
-		MDG-a\_10\_n500\_m50 & 7544.26 & 3.03 & 2.016837\\
-		MDG-b\_21\_n2000\_m200 & 10992775.091951 & 2.72 & 27.771752\\
-		MDG-b\_22\_n2000\_m200 & 10976004.218225 & 2.75 & 27.515051\\
-		MDG-b\_23\_n2000\_m200 & 11010381.091843 & 2.56 & 27.593846\\
-		MDG-b\_24\_n2000\_m200 & 11004690.027815 & 2.53 & 27.324046\\
-		MDG-b\_25\_n2000\_m200 & 11050334.301811 & 2.18 & 27.377645\\
-		MDG-b\_26\_n2000\_m200 & 11009755.0324 & 2.5 & 27.681516\\
-		MDG-b\_27\_n2000\_m200 & 10973671.631925 & 2.94 & 27.388455\\
-		MDG-b\_28\_n2000\_m200 & 11007899.484688 & 2.41 & 27.441754\\
-		MDG-b\_29\_n2000\_m200 & 10965254.29057 & 2.94 & 27.687189\\
-		MDG-b\_30\_n2000\_m200 & 10969766.811796 & 2.89 & 27.704564\\
-		MDG-c\_1\_n3000\_m300 & 24234790 & 2.61 & 81.964096\\
-		MDG-c\_2\_n3000\_m300 & 24291889 & 2.46 & 81.279382\\
-		MDG-c\_8\_n3000\_m400 & 42565620 & 2.01 & 122.55461\\
-		MDG-c\_9\_n3000\_m400 & 42575671 & 1.98 & 124.047167\\
-		MDG-c\_10\_n3000\_m400 & 42429806 & 2.41 & 125.035444\\
-		MDG-c\_13\_n3000\_m500 & 65814139 & 1.79 & 157.365497\\
-		MDG-c\_14\_n3000\_m500 & 65837578 & 1.71 & 158.397447\\
-		MDG-c\_15\_n3000\_m500 & 65882485 & 1.66 & 157.807931\\
-		MDG-c\_19\_n3000\_m600 & 94069575 & 1.64 & 193.966365\\
-		MDG-c\_20\_n3000\_m600 & 94140624 & 1.57 & 192.747059\\
+		MDG-a\_1\_n500\_m50 & 7822.51 & 0.14 & 0.017657\\
+		MDG-a\_2\_n500\_m50 & 7622.47 & 1.92 & 0.017737\\
+		MDG-a\_3\_n500\_m50 & 7687.45 & 0.93 & 0.018346\\
+		MDG-a\_4\_n500\_m50 & 7721.95 & 0.62 & 0.018346\\
+		MDG-a\_5\_n500\_m50 & 7691.9 & 0.82 & 0.017978\\
+		MDG-a\_6\_n500\_m50 & 7725.73 & 0.62 & 0.017659\\
+		MDG-a\_7\_n500\_m50 & 7666.35 & 1.36 & 0.018872\\
+		MDG-a\_8\_n500\_m50 & 7654.96 & 1.24 & 0.018646\\
+		MDG-a\_9\_n500\_m50 & 7700.72 & 0.89 & 0.018478\\
+		MDG-a\_10\_n500\_m50 & 7747.54 & 0.42 & 0.01974\\
+		MDG-b\_21\_n2000\_m200 & 10162614.655392 & 10.06 & 0.209395\\
+		MDG-b\_22\_n2000\_m200 & 10173535.392627 & 9.86 & 0.210087\\
+		MDG-b\_23\_n2000\_m200 & 10155768.757838 & 10.13 & 0.210103\\
+		MDG-b\_24\_n2000\_m200 & 10153786.637714 & 10.07 & 0.209786\\
+		MDG-b\_25\_n2000\_m200 & 10205945.840977 & 9.65 & 0.209136\\
+		MDG-b\_26\_n2000\_m200 & 10186840.609219 & 9.79 & 0.209538\\
+		MDG-b\_27\_n2000\_m200 & 10178369.828872 & 9.97 & 0.210577\\
+		MDG-b\_28\_n2000\_m200 & 10165757.250428 & 9.88 & 0.209549\\
+		MDG-b\_29\_n2000\_m200 & 10166804.326253 & 10.01 & 0.20924\\
+		MDG-b\_30\_n2000\_m200 & 10167455.620431 & 9.99 & 0.210194\\
+		MDG-c\_1\_n3000\_m300 & 22710993 & 8.73 & 0.367478\\
+		MDG-c\_2\_n3000\_m300 & 22674638 & 8.96 & 0.365672\\
+		MDG-c\_8\_n3000\_m400 & 40198770 & 7.46 & 0.44825\\
+		MDG-c\_9\_n3000\_m400 & 40192167 & 7.47 & 0.448765\\
+		MDG-c\_10\_n3000\_m400 & 40208739 & 7.52 & 0.459702\\
+		MDG-c\_13\_n3000\_m500 & 62739982 & 6.38 & 0.524618\\
+		MDG-c\_14\_n3000\_m500 & 62722779 & 6.36 & 0.521154\\
+		MDG-c\_15\_n3000\_m500 & 62827242 & 6.22 & 0.519484\\
+		MDG-c\_19\_n3000\_m600 & 90250861 & 5.63 & 0.576816\\
+		MDG-c\_20\_n3000\_m600 & 90300816 & 5.59 & 0.576425\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AGG con cruce basado en posición
-		en cada caso de estudio.}
-	\label{tab:agg-posicion}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Enfriamiento Simulado Proporcional en cada caso de estudio.}
+	\label{tab:es-proporcional}
 \end{table}
 
 Media de los estadísticos:
@@ -1114,55 +695,54 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		2.54 & 56.34 \\
+		5.96 & 0.24 \\
 		\hline
 	\end{tabular}
 \end{table}
 
 \pagebreak
 
-\subsubsection*{AGE con cruce uniforme}
+\subsubsection*{Búsqueda Multiarranque Básica}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7699.87 & 1.71 & 1.935585\\
-		MDG-a\_2\_n500\_m50 & 7577.32 & 2.5 & 1.79422\\
-		MDG-a\_3\_n500\_m50 & 7539.43 & 2.83 & 1.799771\\
-		MDG-a\_4\_n500\_m50 & 7527.6 & 3.12 & 1.755444\\
-		MDG-a\_5\_n500\_m50 & 7492.01 & 3.39 & 1.743837\\
-		MDG-a\_6\_n500\_m50 & 7604.02 & 2.18 & 1.792661\\
-		MDG-a\_7\_n500\_m50 & 7509.91 & 3.37 & 1.791742\\
-		MDG-a\_8\_n500\_m50 & 7564.46 & 2.41 & 1.74758\\
-		MDG-a\_9\_n500\_m50 & 7567.89 & 2.6 & 1.818509\\
-		MDG-a\_10\_n500\_m50 & 7579.83 & 2.58 & 1.940848\\
-		MDG-b\_21\_n2000\_m200 & 11096803.204221 & 1.8 & 28.572898\\
-		MDG-b\_22\_n2000\_m200 & 11066582.864213 & 1.95 & 30.746676\\
-		MDG-b\_23\_n2000\_m200 & 11103929.892324 & 1.73 & 28.877216\\
-		MDG-b\_24\_n2000\_m200 & 11108833.598636 & 1.61 & 29.766053\\
-		MDG-b\_25\_n2000\_m200 & 11089928.650404 & 1.82 & 30.116922\\
-		MDG-b\_26\_n2000\_m200 & 11072601.605505 & 1.95 & 28.99646\\
-		MDG-b\_27\_n2000\_m200 & 11098217.011779 & 1.84 & 31.245306\\
-		MDG-b\_28\_n2000\_m200 & 11091400.95864 & 1.67 & 31.786776\\
-		MDG-b\_29\_n2000\_m200 & 11056917.76965 & 2.13 & 29.736697\\
-		MDG-b\_30\_n2000\_m200 & 11098912.065773 & 1.75 & 31.97064\\
-		MDG-c\_1\_n3000\_m300 & 24515388 & 1.48 & 98.19262\\
-		MDG-c\_2\_n3000\_m300 & 24514080 & 1.57 & 94.704585\\
-		MDG-c\_8\_n3000\_m400 & 42758112 & 1.56 & 136.57157\\
-		MDG-c\_9\_n3000\_m400 & 42837534 & 1.38 & 134.870618\\
-		MDG-c\_10\_n3000\_m400 & 42870141 & 1.39 & 139.704011\\
-		MDG-c\_13\_n3000\_m500 & 66172152 & 1.26 & 180.704192\\
-		MDG-c\_14\_n3000\_m500 & 66320235 & 0.98 & 170.5091\\
-		MDG-c\_15\_n3000\_m500 & 66331255 & 0.99 & 175.780283\\
-		MDG-c\_19\_n3000\_m600 & 94735806 & 0.94 & 214.486399\\
-		MDG-c\_20\_n3000\_m600 & 94753449 & 0.93 & 220.617744\\
+		MDG-a\_1\_n500\_m50 & 7728.33 & 1.35 & 0.012555\\
+		MDG-a\_2\_n500\_m50 & 7660.38 & 1.43 & 0.012736\\
+		MDG-a\_3\_n500\_m50 & 7685.73 & 0.95 & 0.012163\\
+		MDG-a\_4\_n500\_m50 & 7670.73 & 1.28 & 0.013113\\
+		MDG-a\_5\_n500\_m50 & 7697.13 & 0.75 & 0.01369\\
+		MDG-a\_6\_n500\_m50 & 7672.51 & 1.3 & 0.012915\\
+		MDG-a\_7\_n500\_m50 & 7671.47 & 1.29 & 0.012711\\
+		MDG-a\_8\_n500\_m50 & 7638.95 & 1.44 & 0.012538\\
+		MDG-a\_9\_n500\_m50 & 7671.42 & 1.27 & 0.013783\\
+		MDG-a\_10\_n500\_m50 & 7691.73 & 1.14 & 0.015372\\
+		MDG-b\_21\_n2000\_m200 & 11191731.408656 & 0.96 & 0.548181\\
+		MDG-b\_22\_n2000\_m200 & 11173811.056111 & 1 & 0.545127\\
+		MDG-b\_23\_n2000\_m200 & 11188292.385945 & 0.99 & 0.536318\\
+		MDG-b\_24\_n2000\_m200 & 11171816.301443 & 1.05 & 0.547428\\
+		MDG-b\_25\_n2000\_m200 & 11187435.832728 & 0.96 & 0.545627\\
+		MDG-b\_26\_n2000\_m200 & 11183285.709461 & 0.97 & 0.539269\\
+		MDG-b\_27\_n2000\_m200 & 11187635.60774 & 1.04 & 0.527482\\
+		MDG-b\_28\_n2000\_m200 & 11159849.337533 & 1.06 & 0.521256\\
+		MDG-b\_29\_n2000\_m200 & 11165563.257994 & 1.17 & 0.519606\\
+		MDG-b\_30\_n2000\_m200 & 11175655.345143 & 1.07 & 0.526765\\
+		MDG-c\_1\_n3000\_m300 & 24669394 & 0.86 & 2.025703\\
+		MDG-c\_2\_n3000\_m300 & 24640413 & 1.06 & 2.012946\\
+		MDG-c\_8\_n3000\_m400 & 43103744 & 0.77 & 4.708329\\
+		MDG-c\_9\_n3000\_m400 & 43115518 & 0.74 & 4.693528\\
+		MDG-c\_10\_n3000\_m400 & 43106298 & 0.85 & 4.674107\\
+		MDG-c\_13\_n3000\_m500 & 66572923 & 0.66 & 8.603123\\
+		MDG-c\_14\_n3000\_m500 & 66605573 & 0.56 & 8.606731\\
+		MDG-c\_15\_n3000\_m500 & 66616585 & 0.56 & 8.536043\\
+		MDG-c\_19\_n3000\_m600 & 95117057 & 0.54 & 13.523184\\
+		MDG-c\_20\_n3000\_m600 & 95136282 & 0.53 & 13.541991\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AGE con cruce uniforme
-		en cada caso de estudio.}
-	\label{tab:age-uniforme}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Búsqueda Multiarranque Básica en cada caso de estudio.}
+	\label{tab:bmb}
 \end{table}
 
 Media de los estadísticos:
@@ -1171,55 +751,54 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		1.91 & 62.87 \\
+		0.99 & 2.55 \\
 		\hline
 	\end{tabular}
 \end{table}
 
 \pagebreak
 
-\subsubsection*{AGE con cruce basado en posición}
+\subsubsection*{Búsqueda Local Reiterada}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7499.7 & 4.27 & 1.925836\\
-		MDG-a\_2\_n500\_m50 & 7507.96 & 3.39 & 1.943304\\
-		MDG-a\_3\_n500\_m50 & 7537.63 & 2.86 & 1.957983\\
-		MDG-a\_4\_n500\_m50 & 7646.03 & 1.6 & 1.926846\\
-		MDG-a\_5\_n500\_m50 & 7577.33 & 2.29 & 1.942608\\
-		MDG-a\_6\_n500\_m50 & 7533.03 & 3.1 & 1.934613\\
-		MDG-a\_7\_n500\_m50 & 7627.8 & 1.85 & 1.925517\\
-		MDG-a\_8\_n500\_m50 & 7621.37 & 1.67 & 1.929454\\
-		MDG-a\_9\_n500\_m50 & 7581.98 & 2.42 & 1.937019\\
-		MDG-a\_10\_n500\_m50 & 7591.91 & 2.42 & 1.988036\\
-		MDG-b\_21\_n2000\_m200 & 10971888.149454 & 2.9 & 28.643575\\
-		MDG-b\_22\_n2000\_m200 & 11027565.453894 & 2.3 & 28.229621\\
-		MDG-b\_23\_n2000\_m200 & 10984557.930365 & 2.79 & 28.259755\\
-		MDG-b\_24\_n2000\_m200 & 11019573.82926 & 2.4 & 28.206778\\
-		MDG-b\_25\_n2000\_m200 & 11031909.811213 & 2.34 & 28.188983\\
-		MDG-b\_26\_n2000\_m200 & 10972375.024121 & 2.83 & 28.235294\\
-		MDG-b\_27\_n2000\_m200 & 11019671.669981 & 2.53 & 29.779949\\
-		MDG-b\_28\_n2000\_m200 & 11003349.24807 & 2.45 & 28.305121\\
-		MDG-b\_29\_n2000\_m200 & 10984303.49364 & 2.77 & 28.312105\\
-		MDG-b\_30\_n2000\_m200 & 11018900.201837 & 2.46 & 28.268545\\
-		MDG-c\_1\_n3000\_m300 & 24257830 & 2.52 & 79.378184\\
-		MDG-c\_2\_n3000\_m300 & 24288993 & 2.47 & 80.020735\\
-		MDG-c\_8\_n3000\_m400 & 42566989 & 2 & 122.195934\\
-		MDG-c\_9\_n3000\_m400 & 42606289 & 1.91 & 123.499277\\
-		MDG-c\_10\_n3000\_m400 & 42579055 & 2.06 & 123.454948\\
-		MDG-c\_13\_n3000\_m500 & 65940834 & 1.6 & 162.591331\\
-		MDG-c\_14\_n3000\_m500 & 65888399 & 1.63 & 160.209596\\
-		MDG-c\_15\_n3000\_m500 & 65949859 & 1.56 & 159.929673\\
-		MDG-c\_19\_n3000\_m600 & 94208266 & 1.49 & 198.198681\\
-		MDG-c\_20\_n3000\_m600 & 94167554 & 1.54 & 198.774549\\
+		MDG-a\_1\_n500\_m50 & 7709.93 & 1.58 & 0.005458\\
+		MDG-a\_2\_n500\_m50 & 7724.48 & 0.61 & 0.005492\\
+		MDG-a\_3\_n500\_m50 & 7700.95 & 0.75 & 0.005432\\
+		MDG-a\_4\_n500\_m50 & 7698.72 & 0.92 & 0.004801\\
+		MDG-a\_5\_n500\_m50 & 7675.08 & 1.03 & 0.005607\\
+		MDG-a\_6\_n500\_m50 & 7724.5 & 0.63 & 0.00516\\
+		MDG-a\_7\_n500\_m50 & 7684.35 & 1.12 & 0.005209\\
+		MDG-a\_8\_n500\_m50 & 7636.8 & 1.47 & 0.004604\\
+		MDG-a\_9\_n500\_m50 & 7588.69 & 2.33 & 0.005811\\
+		MDG-a\_10\_n500\_m50 & 7639.14 & 1.81 & 0.005155\\
+		MDG-b\_21\_n2000\_m200 & 11246174.943997 & 0.48 & 0.279171\\
+		MDG-b\_22\_n2000\_m200 & 11234217.903533 & 0.47 & 0.283377\\
+		MDG-b\_23\_n2000\_m200 & 11265404.407986 & 0.31 & 0.282715\\
+		MDG-b\_24\_n2000\_m200 & 11235595.316972 & 0.49 & 0.278637\\
+		MDG-b\_25\_n2000\_m200 & 11238488.875162 & 0.51 & 0.264429\\
+		MDG-b\_26\_n2000\_m200 & 11222485.977794 & 0.62 & 0.266735\\
+		MDG-b\_27\_n2000\_m200 & 11270651.986493 & 0.31 & 0.271429\\
+		MDG-b\_28\_n2000\_m200 & 11206855.439177 & 0.65 & 0.267736\\
+		MDG-b\_29\_n2000\_m200 & 11232129.73934 & 0.58 & 0.28129\\
+		MDG-b\_30\_n2000\_m200 & 11221257.950393 & 0.67 & 0.268129\\
+		MDG-c\_1\_n3000\_m300 & 24799202 & 0.34 & 0.891335\\
+		MDG-c\_2\_n3000\_m300 & 24768855 & 0.55 & 0.873298\\
+		MDG-c\_8\_n3000\_m400 & 43289507 & 0.34 & 1.848681\\
+		MDG-c\_9\_n3000\_m400 & 43310665 & 0.29 & 1.906863\\
+		MDG-c\_10\_n3000\_m400 & 43295479 & 0.42 & 1.905886\\
+		MDG-c\_13\_n3000\_m500 & 66746057 & 0.4 & 3.34356\\
+		MDG-c\_14\_n3000\_m500 & 66829831 & 0.22 & 3.357704\\
+		MDG-c\_15\_n3000\_m500 & 66888838 & 0.16 & 3.323805\\
+		MDG-c\_19\_n3000\_m600 & 95338561 & 0.31 & 5.247\\
+		MDG-c\_20\_n3000\_m600 & 95405963 & 0.25 & 5.039759\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AGE con cruce basado en posición
-		en cada caso de estudio.}
-	\label{tab:age-posicion}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Búsqueda Local Reiterada en cada caso de estudio.}
+	\label{tab:ils}
 \end{table}
 
 Media de los estadísticos:
@@ -1228,54 +807,55 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		2.35 & 57.07 \\
+		0.69 & 1.02 \\
 		\hline
 	\end{tabular}
 \end{table}
 
 \pagebreak
 
-\subsubsection*{AM-(10,1.0)}
+\subsubsection*{Híbrido ILS-ES (Cauchy Modificado)}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7700.82 & 1.7 & 0.185877\\
-		MDG-a\_2\_n500\_m50 & 7721.71 & 0.64 & 0.163316\\
-		MDG-a\_3\_n500\_m50 & 7705.94 & 0.69 & 0.19582\\
-		MDG-a\_4\_n500\_m50 & 7645.81 & 1.6 & 0.203958\\
-		MDG-a\_5\_n500\_m50 & 7643.15 & 1.45 & 0.210678\\
-		MDG-a\_6\_n500\_m50 & 7664.54 & 1.4 & 0.186335\\
-		MDG-a\_7\_n500\_m50 & 7700.58 & 0.92 & 0.180075\\
-		MDG-a\_8\_n500\_m50 & 7692.35 & 0.76 & 0.202284\\
-		MDG-a\_9\_n500\_m50 & 7623.02 & 1.89 & 0.174959\\
-		MDG-a\_10\_n500\_m50 & 7711.32 & 0.89 & 0.165259\\
-		MDG-b\_21\_n2000\_m200 & 11098034.367619 & 1.79 & 12.714229\\
-		MDG-b\_22\_n2000\_m200 & 11114872.596709 & 1.52 & 13.74357\\
-		MDG-b\_23\_n2000\_m200 & 11046514.713112 & 2.24 & 13.221175\\
-		MDG-b\_24\_n2000\_m200 & 11085811.030799 & 1.82 & 12.426276\\
-		MDG-b\_25\_n2000\_m200 & 11108364.164213 & 1.66 & 13.379022\\
-		MDG-b\_26\_n2000\_m200 & 11101324.660648 & 1.69 & 12.462323\\
-		MDG-b\_27\_n2000\_m200 & 11108922.583065 & 1.74 & 12.367685\\
-		MDG-b\_28\_n2000\_m200 & 11114670.65925 & 1.46 & 12.96751\\
-		MDG-b\_29\_n2000\_m200 & 11163653.99827 & 1.18 & 12.191321\\
-		MDG-b\_30\_n2000\_m200 & 11092297.742468 & 1.81 & 11.631424\\
-		MDG-c\_1\_n3000\_m300 & 24501042 & 1.54 & 41.494163\\
-		MDG-c\_2\_n3000\_m300 & 24455245 & 1.81 & 39.206223\\
-		MDG-c\_8\_n3000\_m400 & 42827259 & 1.4 & 52.130071\\
-		MDG-c\_9\_n3000\_m400 & 42743253 & 1.6 & 50.978821\\
-		MDG-c\_10\_n3000\_m400 & 42808199 & 1.54 & 51.95662\\
-		MDG-c\_13\_n3000\_m500 & 66183870 & 1.24 & 70.166402\\
-		MDG-c\_14\_n3000\_m500 & 66120270 & 1.28 & 67.915979\\
-		MDG-c\_15\_n3000\_m500 & 66236107 & 1.13 & 65.384416\\
-		MDG-c\_19\_n3000\_m600 & 94745444 & 0.93 & 79.415658\\
-		MDG-c\_20\_n3000\_m600 & 94389441 & 1.31 & 89.668006\\
+		MDG-a\_1\_n500\_m50 & 7668.88 & 2.11 & 0.018958\\
+		MDG-a\_2\_n500\_m50 & 7570.89 & 2.58 & 0.019275\\
+		MDG-a\_3\_n500\_m50 & 7629.52 & 1.67 & 0.019115\\
+		MDG-a\_4\_n500\_m50 & 7610.35 & 2.06 & 0.019151\\
+		MDG-a\_5\_n500\_m50 & 7558.51 & 2.54 & 0.019174\\
+		MDG-a\_6\_n500\_m50 & 7611.88 & 2.08 & 0.01904\\
+		MDG-a\_7\_n500\_m50 & 7595.01 & 2.27 & 0.018986\\
+		MDG-a\_8\_n500\_m50 & 7608.75 & 1.83 & 0.019084\\
+		MDG-a\_9\_n500\_m50 & 7637.98 & 1.7 & 0.019134\\
+		MDG-a\_10\_n500\_m50 & 7624.97 & 2 & 0.02031\\
+		MDG-b\_21\_n2000\_m200 & 11102518.768872 & 1.75 & 0.417906\\
+		MDG-b\_22\_n2000\_m200 & 11097704.226095 & 1.68 & 0.434521\\
+		MDG-b\_23\_n2000\_m200 & 11107942.10879 & 1.7 & 0.422667\\
+		MDG-b\_24\_n2000\_m200 & 11095329.156269 & 1.73 & 0.418913\\
+		MDG-b\_25\_n2000\_m200 & 11106612.269199 & 1.68 & 0.407629\\
+		MDG-b\_26\_n2000\_m200 & 11115693.739341 & 1.56 & 0.437994\\
+		MDG-b\_27\_n2000\_m200 & 11106412.843644 & 1.76 & 0.38352\\
+		MDG-b\_28\_n2000\_m200 & 11099474.468795 & 1.6 & 0.377382\\
+		MDG-b\_29\_n2000\_m200 & 11090079.958744 & 1.83 & 0.381952\\
+		MDG-b\_30\_n2000\_m200 & 11108647.770283 & 1.66 & 0.381864\\
+		MDG-c\_1\_n3000\_m300 & 24518332 & 1.47 & 1.087397\\
+		MDG-c\_2\_n3000\_m300 & 24539459 & 1.47 & 1.088532\\
+		MDG-c\_8\_n3000\_m400 & 42966259 & 1.08 & 1.346259\\
+		MDG-c\_9\_n3000\_m400 & 42961477 & 1.1 & 1.343878\\
+		MDG-c\_10\_n3000\_m400 & 42931845 & 1.25 & 1.340798\\
+		MDG-c\_13\_n3000\_m500 & 66388188 & 0.93 & 1.545965\\
+		MDG-c\_14\_n3000\_m500 & 66365061 & 0.92 & 1.549764\\
+		MDG-c\_15\_n3000\_m500 & 66443388 & 0.82 & 1.548566\\
+		MDG-c\_19\_n3000\_m600 & 94850218 & 0.82 & 1.725036\\
+		MDG-c\_20\_n3000\_m600 & 94801190 & 0.88 & 1.74827\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AM-(10,1.0).}
-	\label{tab:am-10-1}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo que combina
+		Búsqueda Local Reiterada con Enfriamiento Simulado (con Cauchy Modificado) en cada caso de estudio.}
+	\label{tab:ils-es}
 \end{table}
 
 Media de los estadísticos:
@@ -1284,54 +864,55 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		1.42 & 24.58 \\
+		1.62 & 0.62 \\
 		\hline
 	\end{tabular}
 \end{table}
 
 \pagebreak
 
-\subsubsection*{AM-(10,0.1)}
+\subsubsection*{Híbrido ILS-ES (Proporcional)}
 
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7665.34 & 2.15 & 0.444765\\
-		MDG-a\_2\_n500\_m50 & 7638.93 & 1.71 & 0.424028\\
-		MDG-a\_3\_n500\_m50 & 7659.83 & 1.28 & 0.427798\\
-		MDG-a\_4\_n500\_m50 & 7594.19 & 2.27 & 0.454077\\
-		MDG-a\_5\_n500\_m50 & 7644.02 & 1.43 & 0.423357\\
-		MDG-a\_6\_n500\_m50 & 7602.98 & 2.2 & 0.43389\\
-		MDG-a\_7\_n500\_m50 & 7622.97 & 1.91 & 0.425276\\
-		MDG-a\_8\_n500\_m50 & 7646.34 & 1.35 & 0.409405\\
-		MDG-a\_9\_n500\_m50 & 7644.58 & 1.62 & 0.408827\\
-		MDG-a\_10\_n500\_m50 & 7623.36 & 2.02 & 0.415836\\
-		MDG-b\_21\_n2000\_m200 & 11154224.651148 & 1.29 & 24.167352\\
-		MDG-b\_22\_n2000\_m200 & 11195682.50995 & 0.81 & 25.845168\\
-		MDG-b\_23\_n2000\_m200 & 11193129.056159 & 0.95 & 23.585301\\
-		MDG-b\_24\_n2000\_m200 & 11154194.151774 & 1.21 & 27.342935\\
-		MDG-b\_25\_n2000\_m200 & 11181857.898937 & 1.01 & 23.255834\\
-		MDG-b\_26\_n2000\_m200 & 11185064.252571 & 0.95 & 24.836796\\
-		MDG-b\_27\_n2000\_m200 & 11186293.835698 & 1.06 & 23.695422\\
-		MDG-b\_28\_n2000\_m200 & 11136103.80939 & 1.27 & 21.437087\\
-		MDG-b\_29\_n2000\_m200 & 11164170.189057 & 1.18 & 23.421367\\
-		MDG-b\_30\_n2000\_m200 & 11154631.751513 & 1.26 & 24.846379\\
-		MDG-c\_1\_n3000\_m300 & 24728126 & 0.63 & 84.572393\\
-		MDG-c\_2\_n3000\_m300 & 24697000 & 0.84 & 72.995771\\
-		MDG-c\_8\_n3000\_m400 & 43165013 & 0.63 & 100.799762\\
-		MDG-c\_9\_n3000\_m400 & 43149724 & 0.66 & 105.070718\\
-		MDG-c\_10\_n3000\_m400 & 43187178 & 0.66 & 100.059467\\
-		MDG-c\_13\_n3000\_m500 & 66773925 & 0.36 & 122.149366\\
-		MDG-c\_14\_n3000\_m500 & 66647248 & 0.5 & 119.359096\\
-		MDG-c\_15\_n3000\_m500 & 66732655 & 0.39 & 116.756599\\
-		MDG-c\_19\_n3000\_m600 & 95201709 & 0.45 & 140.959524\\
-		MDG-c\_20\_n3000\_m600 & 95187705 & 0.48 & 141.718517\\
+		MDG-a\_1\_n500\_m50 & 7560.83 & 3.48 & 0.01891\\
+		MDG-a\_2\_n500\_m50 & 7563.4 & 2.68 & 0.018826\\
+		MDG-a\_3\_n500\_m50 & 7460.16 & 3.86 & 0.019232\\
+		MDG-a\_4\_n500\_m50 & 7451.87 & 4.1 & 0.01887\\
+		MDG-a\_5\_n500\_m50 & 7436.75 & 4.11 & 0.019018\\
+		MDG-a\_6\_n500\_m50 & 7518.25 & 3.29 & 0.018643\\
+		MDG-a\_7\_n500\_m50 & 7502.04 & 3.47 & 0.018787\\
+		MDG-a\_8\_n500\_m50 & 7495.04 & 3.3 & 0.018996\\
+		MDG-a\_9\_n500\_m50 & 7554.54 & 2.77 & 0.018889\\
+		MDG-a\_10\_n500\_m50 & 7462.38 & 4.09 & 0.0205\\
+		MDG-b\_21\_n2000\_m200 & 10057595.617523 & 10.99 & 0.192389\\
+		MDG-b\_22\_n2000\_m200 & 10063542.205813 & 10.84 & 0.192122\\
+		MDG-b\_23\_n2000\_m200 & 9993237.92958 & 11.56 & 0.192491\\
+		MDG-b\_24\_n2000\_m200 & 10021100.549492 & 11.25 & 0.192892\\
+		MDG-b\_25\_n2000\_m200 & 10025313.148476 & 11.25 & 0.192684\\
+		MDG-b\_26\_n2000\_m200 & 10051312.29967 & 10.99 & 0.193354\\
+		MDG-b\_27\_n2000\_m200 & 10051140.804994 & 11.1 & 0.192243\\
+		MDG-b\_28\_n2000\_m200 & 10025336.809131 & 11.12 & 0.193467\\
+		MDG-b\_29\_n2000\_m200 & 10047516.382319 & 11.06 & 0.192314\\
+		MDG-b\_30\_n2000\_m200 & 9971925.528861 & 11.72 & 0.19205\\
+		MDG-c\_1\_n3000\_m300 & 22502085 & 9.57 & 0.405454\\
+		MDG-c\_2\_n3000\_m300 & 22535949 & 9.51 & 0.407438\\
+		MDG-c\_8\_n3000\_m400 & 40024366 & 7.86 & 0.499524\\
+		MDG-c\_9\_n3000\_m400 & 40134952 & 7.6 & 0.497438\\
+		MDG-c\_10\_n3000\_m400 & 40082879 & 7.81 & 0.5004\\
+		MDG-c\_13\_n3000\_m500 & 62482702 & 6.76 & 0.576292\\
+		MDG-c\_14\_n3000\_m500 & 62517590 & 6.66 & 0.571553\\
+		MDG-c\_15\_n3000\_m500 & 62559375 & 6.62 & 0.570204\\
+		MDG-c\_19\_n3000\_m600 & 90059376 & 5.83 & 0.63464\\
+		MDG-c\_20\_n3000\_m600 & 89993465 & 5.91 & 0.633904\\
 		\hline
 	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AM-(10,0.1).}
-	\label{tab:am-10-01}
+	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo que combina
+		Búsqueda Local Reiterada con Enfriamiento Simulado (Proporcional) en cada caso de estudio.}
+	\label{tab:ils-es-proporcional}
 \end{table}
 
 Media de los estadísticos:
@@ -1340,63 +921,7 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		1.15 & 45.04 \\
-		\hline
-	\end{tabular}
-\end{table}
-
-\pagebreak
-
-\subsubsection*{AM-(10,0.1mej)}
-
-\begin{table}[H]
-	\centering
-	\begin{tabular}{|cccc|}
-		\hline
-		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7637.16 & 2.51 & 0.414972\\
-		MDG-a\_2\_n500\_m50 & 7724.21 & 0.61 & 0.41606\\
-		MDG-a\_3\_n500\_m50 & 7650.23 & 1.41 & 0.411984\\
-		MDG-a\_4\_n500\_m50 & 7619.15 & 1.94 & 0.431361\\
-		MDG-a\_5\_n500\_m50 & 7683.11 & 0.93 & 0.415595\\
-		MDG-a\_6\_n500\_m50 & 7606.02 & 2.16 & 0.406575\\
-		MDG-a\_7\_n500\_m50 & 7671.13 & 1.29 & 0.407201\\
-		MDG-a\_8\_n500\_m50 & 7640.97 & 1.42 & 0.417129\\
-		MDG-a\_9\_n500\_m50 & 7623.97 & 1.88 & 0.392046\\
-		MDG-a\_10\_n500\_m50 & 7609.15 & 2.2 & 0.387585\\
-		MDG-b\_21\_n2000\_m200 & 11132452.586865 & 1.48 & 19.528066\\
-		MDG-b\_22\_n2000\_m200 & 11189058.525244 & 0.87 & 23.840448\\
-		MDG-b\_23\_n2000\_m200 & 11199499.507476 & 0.89 & 25.008253\\
-		MDG-b\_24\_n2000\_m200 & 11153274.975023 & 1.22 & 25.542597\\
-		MDG-b\_25\_n2000\_m200 & 11197661.105297 & 0.87 & 25.065803\\
-		MDG-b\_26\_n2000\_m200 & 11175094.576497 & 1.04 & 22.660221\\
-		MDG-b\_27\_n2000\_m200 & 11214002.699731 & 0.81 & 24.63223\\
-		MDG-b\_28\_n2000\_m200 & 11190418.039251 & 0.79 & 23.46206\\
-		MDG-b\_29\_n2000\_m200 & 11181245.238434 & 1.03 & 20.418433\\
-		MDG-b\_30\_n2000\_m200 & 11165943.182085 & 1.15 & 21.691616\\
-		MDG-c\_1\_n3000\_m300 & 24680269 & 0.82 & 68.57299\\
-		MDG-c\_2\_n3000\_m300 & 24667185 & 0.96 & 74.06677\\
-		MDG-c\_8\_n3000\_m400 & 43190089 & 0.57 & 86.488724\\
-		MDG-c\_9\_n3000\_m400 & 43125997 & 0.72 & 98.001809\\
-		MDG-c\_10\_n3000\_m400 & 43136622 & 0.78 & 88.114333\\
-		MDG-c\_13\_n3000\_m500 & 66704966 & 0.46 & 112.764369\\
-		MDG-c\_14\_n3000\_m500 & 66664685 & 0.47 & 110.111094\\
-		MDG-c\_15\_n3000\_m500 & 66655997 & 0.5 & 109.479115\\
-		MDG-c\_19\_n3000\_m600 & 95292197 & 0.36 & 130.071368\\
-		MDG-c\_20\_n3000\_m600 & 95132559 & 0.53 & 121.509782\\
-		\hline
-	\end{tabular}
-	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo AM-(10,0.1mej).}
-	\label{tab:am-10-01mej}
-\end{table}
-
-Media de los estadísticos:
-\begin{table}[H]
-	\centering
-	\begin{tabular}{|cc|}
-		\hline
-		Desv & Tiempo (s)\\ \hline
-		1.09 & 41.17 \\
+		7.37 & 0.25 \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -1404,7 +929,7 @@ Media de los estadísticos:
 \pagebreak
 
 Comparamos los estadísticos medios obtenidos estos algoritmos entre sí y con los obtenidos por los algoritmos
-de búsqueda local (con primer mejor) y greedy de la práctica anterior.
+de búsqueda local (con primer mejor) y greedy de la primera práctica.
 
 \begin{table}[H]
 	\centering
@@ -1413,13 +938,12 @@ de búsqueda local (con primer mejor) y greedy de la práctica anterior.
 		Algoritmo & Desv & Tiempo (s)\\ \hline
 		Greedy & 1.63 & 1.19 \\
 		BL & 1.3 & 0.69 \\
-		AGG-uniforme & 1.52 & 90.12 \\
-		AGG-posicion & 2.54 & 56.34 \\
-		AGE-uniforme & 1.91 & 62.87 \\
-		AGE-posicion & 2.35 & 57.07 \\
-		AM-(10,1.0) & 1.42 & 24.58 \\
-		AM-(10,0.1) & 1.15 & 45.04 \\
-		AM-(10,0.1mej) & 1.09 & 41.17 \\
+		ES-CM & 1.41 & 0.25 \\
+		ES-prop & 5.96 & 0.24 \\
+		BMB & 0.99 & 2.55 \\
+		ILS & 0.69 & 1.02 \\
+		ILS-ES-CM & 1.62 & 0.62 \\
+		ILS-ES-prop & 7.37 & 0.25 \\
 		\hline
 	\end{tabular}
 	\caption{Comparativa de los estadísticos medios obtenidos por los distintos algoritmos.}
@@ -1428,116 +952,6 @@ de búsqueda local (con primer mejor) y greedy de la práctica anterior.
 
 \subsection{Análisis de resultados}
 
-A la vista de la Tabla \ref{tab:comparativa}, intuimos que todos son algoritmos decentes para la resolución
-de este problema, aunque hay diferencias entre ellos.
-
-Sin duda, los tiempos de los algoritmos que sólo manejan una solución (búsqueda local y greedy) en lugar de
-una población de soluciones son mucho más rápidos. El tiempo de cómputo de estos algoritmos tiene un orden
-de magnitud bastante inferior a los algoritmos basados en poblaciones. En cuanto a fitness, los algoritmos de
-la práctica 1 obtienen mejores resultados (en general) que los genéticos, pero se ven superados por los meméticos, que
-obtienen los mejores resultados entre las alternativas que consideramos.
-
-\subsubsection*{A grandes rasgos: algoritmos genéticos frente a meméticos}
-
-Respecto a la fitness conseguida, la ninguno de los \textbf{algoritmos genéticos} logra superar a la búsqueda local, y sólo
-el AGG-uniforme supera (por poco) a greedy. Esto posiblemente se deba a la falta de explotación en estos algoritmos, ya que
-no buscan explícitamente soluciones mejores, sino esperan que se generen por medio de cruces y mutaciones y se
-mantengan por la simulación que hacemos de selección natural.
-
-El problema de los algoritmos genéticos es que cuando la mejor solución es replicada en muchos de los cromosomas,
-algo que acaba pasando debido al comportamiento del algoritmo y a lo que llamamos ``convergencia del algoritmo'',
-es muy difícil que el algoritmo encuentre nuevas soluciones. Esto se debe a que el operador de cruce de dos
-soluciones idénticas genera hijos idénticos a los padres. Por tanto, es posible que rápidamente toda la población
-se vea ``invadida'' por una o varias soluciones mejores que el resto, y esto lleve a una pérdida de diversidad
- (me refiero a diversidad genética, variedad entre soluciones) significativa. Por tanto, es posible que estos algoritmos
- converjan (encuentren una solución buena) rápidamente y después se pasen un gran número de iteraciones trabajando con
- soluciones muy similares hasta que una mutación o cruce fortuito mejore la fitness de la población, dando lugar
- a un gran número de evaluaciones desperdiciadas.
-
-Para justificar esta hipótesis, resaltamos que la función que calcula los índices de la peor y segunda peor solución de la población en
-el esquema estacionario (se invoca en el Algoritmo \ref{alg:replacement-stationary}) acaba devolviendo 0 y 1 a partir
-de un número de iteraciones, y rara vez vuelve a devolver valores distintos. Esto quiere decir que encontrar soluciones
-mejores es muy difícil para el algoritmo a partir de cierto punto, y se limita a agotar las evaluaciones restantes
-con la esperanza de que alguna mutación o cruce origine una solución mejor.
-
-Podríamos pensar que nuestra implementación del reemplazamiento elitista en AGG puede ser causante de este problema
-(ver comentarios tras Algoritmo \ref{alg:replacement-agg}), pero esto no explica el problema en el caso de AGE, que
-de hecho obtiene soluciones peores en media (ligeramente mejores para el cruce basado en posición, pero peores
-para el cruce uniforme). Por tanto nuestra implementación del elitismo como mucho acentúa ligeramente este problema,
-que es intrínseco a los algoritmos genéticos.
-
-Para solventar esto, añadimos un componente de explotación como es la búsqueda local, dando lugar a los \textbf{algoritmos
-meméticos} (implementados sobre el esquema generacional con cruce uniforme, el AGG que mejores resultados obtiene).
-De esta forma, una parte de las evaluaciones se dedica a la exploración (genéticos) y otra a la explotación (búsqueda local). Este
-equilibrio los convierte en los más adecuados para el problema entre las alternativas consideradas, ya que consiguen las mejores
-fitness con la excepción del AM-(10,1.0), que es ligeramente superado por la búsqueda local.
-
-Además, estos algoritmos consiguen un
-efecto que combate el problema de la pérdida de la convergencia demasiado rápida en los algoritmos genéticos que hemos comentado
-anteriormente. Aplicar la búsqueda local a algunas soluciones separa los miembros de la población unos de otros y da lugar a un
-conjunto más variado de soluciones. Por ejemplos, si el algoritmo encuentra una buena solución que acaba copiándose multiples veces
-y desbancando al resto, aplicar búsqueda local a algunas de las copias de esa solución provocarán que el conjunto de soluciones sea
-más variado, con lo que podemos esperar cruces de soluciones más distintas y que alguno de ellos dé lugar a una solución mejor. Esta mejora
-se nota menos en AM-(10,1.0), ya que aplica búsqueda local a todos los cromosomas y no sólo a algunos, de hecho esta variante de memético
-consigue los peores resultados entre este tipo de algoritmo. El hecho de que la búsqueda local se realice con primer mejor y explorando
-los entornos en orden aleatorio, consigue que soluciones iguales se transformen en soluciones distintas, debido a que la aleatoriedad de
-exploración del entorno provoca que no se salte siempre al mismo vecino (al contrario que en la búsqueda local con mejor), esta
- diversificación ocurre también aunque se aplique búsqueda local a todas las soluciones y no sólo a algunas, luego también mejora 
-  AM-(10,1.0). Ésto sin mencionar que la alternaiva del primer mejor consume muchísimas menos evaluaciones que la búsqueda local con mejor,
-  lo que comprobamos como trabajo voluntario en la anterior práctica.
-  
-En resumen, los algoritmos genéticos carecen de explotación y pueden tener el problema de que se pierda la diversidad demasiado pronto,
-y la introducción de la búsqueda local combate ambos problemas.
-
-Respecto al tiempo, los algoritmos meméticos tardan mucho menos, ya que en la búsqueda local se dedica mucho más porcentaje del
-tiempo de cómputo a evaluar soluciones. Además, estas evaluaciones son mucho más rápidas al calcularse la fitness de forma
-factorizada.
-  
-\subsubsection*{Cruce uniforme frente a cruce basado en posición}
-
-El operador de cruce uniforme proporciona mejores resultados, lo que puede deberse a que palia esa pérdida de diversidad genética que
-hemos comentado. A pesar de que parecen muy similares (los dos respetan las decisiones tomadas por ambos padres), existe una diferencia
-que hace mejor al cruce uniforme.
-
-Primero, ambos cruces eligen y descartan los elementos en los que ambos padres estén de acuerdo. Después se rellena la solución de
-forma aleatoria en ambos casos, con la siguiente diferencia: la probabilidad de que un elemento sólo seleccionado por uno de los padres
-sea seleccionado por el hijo es siempre de \\ $\dfrac{\text{número de huecos por cubrir}}{\text{número de elementos seleccionados por sólo un padre}}$ en el cruce basado en posición, mientras que en el cruce uniforme esta probabilidad depende de la aportación del elemento.
-En cruce uniforme se introduce cada uno de los elementos con probabilidad 0.5, y a partir de ahí se elimina o se añade el que más aporta
-dependiendo de si faltan o sobran elementos. De esta forma, algunos hijos llevan un componente de explotación que recuerda al greedy
- (cuando faltan elementos y se añaden los
-que más aportan), mientras que otros hijos se empeoran a propósito para no quedarnos sin variedad en las soluciones (cuando sobran
- elementos y se eliminan los que más aportan). Este comportamiento sugiere que los hijos procedentes de cruces uniformes serán más
-variados que los basados en posición, y además habrá algunos hijos (en los que se añadan elementos de fuera) que tendrán cierta
-componente de explotación similar a la del greedy, lo que podría solventar parcialmente los problemas de los algoritmos genéticos que
-comentamos con anterioridad.
-
-Como consecuencia usamos el cruce uniforme (y el esquema generacional) para los algoritmos meméticos.
-
-Respecto al tiempo, el algoritmo de reparación puede requerir varias búsquedas del elemento que más aporta, que son bastante costosas,
-sobre todo cuando vienen de fuera de la solución. Esto provoca que sea más lento, se aprecia más en el esquema generacional.
-
-\subsubsection*{AGG frente a AGE}
-
-No hay una gran diferencia en los resultados obtendios por ambos esquemas de reemplazamiento. El esquema generacional ha resultado
-algo más efectivo en media debido a su mejor desempeño con el cruce uniforme.
-Respecto a tiempos, el esquema generacional es algo más lento cuando se utiliza el cruce uniforme. 
-
-\subsubsection*{Variantes de meméticos}
-
-Además de añadir una componente de explotación de la que carecen los algoritmos genéticos. Hemos explicado cómo la introducción de
-la búsqueda local (sobre todo con primer mejor) aumenta la diversidad entre los cromosomas, es más notable en las variantes en las que sólo
-se aplica a algunos de los cromosomas. Como consecuencia, los algoritmos meméticos proporcionan (en en media) los mejores resultados
-
-Dentro de los los meméticos, AM-(10,0.1) y AM-(10,0.1mej) ofrecen un mejor desempeño debido a esa mayor diversidad genética en las soluciones y a que
-no compensa invertir demasiadas itereaciones en mejorar todos los cromosomas, ya que cierto número de soluciones no sobreviven cada
-generación. 
-
-Dentro de sólo aplicar la búsqueda local a algunas soluciones, obtiene ligeramente mejores resultados (en media) la alternativa que la aplica
-a las mejores (a las 10\% mejores), probablemente debido a que aprovechan mejor la explotación. Mejoran aun más las soluciones con más
-fitness, lo que al cabo de varias generaciones se traduce en una mayor mejora de la población. Puesto que la búsqueda local sólo
-se realiza hasta consumir 400 evaluaciones por cromosoma, las mejores más altas tienen más posibilidades de alcanzar una mayor fitness.
-
-Respecto al tiempo, AM-(10,1.0) es el memético más rápido con diferencia, ya que dedica 10 veces más que las otras variantes a hacer
-búsqueda local, que es una forma mucho más rápida de consumir evaluaciones por la cantidad que hace y por hacerlas factorizadas.
+TODO
 
 \end{document}

@@ -115,7 +115,7 @@ class Solution {
 
 void es(vector<vector<double> > &mat) {
 
-  unsigned exitos=1, vecinos, max_vecinos=10*m;
+  unsigned exitos=1, vecinos, max_vecinos=10*n;
   unsigned max_exitos=0.1*max_vecinos;
   unsigned M=LIMIT/max_vecinos;
   double delta;
