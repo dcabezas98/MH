@@ -173,7 +173,13 @@ Esta expresión nos será de utilidad para la implementación de los algoritmos.
 
 Gracias a la existencia del Algoritmo \ref{alg:contrib}, podemos obtener esta expresión como $\operatorname{contrib}(S,D,e)$.
 
-TODO
+Para los pseudocódigos que siguen, suponemos la matriz de distancias $D$ y los parámetros $n$ y $m$ accesibles. El
+conjunto de todos los elementos es el $\{0,\ldots , n-1\}$, para cuando nos refiramos a elementos de fuera de un
+ subconjunto
+de ellos.
+
+Todos los algoritmos de esta práctica parten de soluciones aleatorias. La siguiente función permite construir
+las soluciones aleatorias que utilizaremos como partida.
 
 \begin{algorithm}[H]
 	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
@@ -189,13 +195,87 @@ TODO
 	\label{alg:randomsol}
 \end{algorithm}
 
-TODO
+La mayoría de algoritmos implementados en esta práctica hacen uso de la búsqueda local. El siguiente algoritmo
+implementa esta búsqueda. Supondremos declaradas las variables globales $LIMIT$, que valdrá 100000 o 10000 dependiendo
+de si el problema es de trayectoria simple o múltiple; y $EVALS$, las evaluaciones hasta el momento, esta variable
+comienza a 0 y sólo es reseteada en los problemas de trayectorias múltiples (donde $LIMIT$ vale 10000), y se resetea
+10 veces para que el total de evaluaciones siempre sea 100000.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Solución de partida $S$.}
+	\KwOut{La solución $S$ se modifica (no se devuelve) con varias iteraciones de búsqueda local.}
+	$E \gets \{0,\ldots,n-1\}$ \tcp*{Vector con todos los elementos.}
+	$carryon \gets true$\;
+	\While{carryon}{
+		$carryon \gets false$\;
+		$lowest\gets \text{indice del elemento de $S$ que menos contribuye, minimiza $\operatorname{contrib}(S,D,S[lowest])$}$\;
+		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$
+		$E \gets \operatorname{shuffle}(E)$ \tcp*{Para explorar los posibles vecinos en orden aleatorio.}
+		\For{$e$ \textbf{in} $E$} {
+			\If{$e\in S$}{
+				continue \tcp*{Si ya está escogido, no lo cuento.}
+			}
+			$contrib \gets \operatorname{contrib}(S,D,e)-D[e,S[lowest]]$ \tcp*{Contribución a la solución sin el elemento a sustituir.}
+			$EVALS \gets EVALS+1$ \tcp*{He evaludado una posible solución.}
+			\If{$contrib > min\_contrib$} { 
+				$S.fitness \gets S.fitness + contrib - min\_contrib$ \tcp*{Fitness de la nueva solución}
+				$carryon \gets true$ \tcp*{Toca saltar, lo que completa la iteración}
+				$S[lowest]\gets e$ \tcp*{Saltamos a la nueva solución}
+			}
+			\If{$carryon==true$ or $EVALS\geq LIMIT$} { 
+				break  \tcp*{Se cumple alguna de las condiciones de parada}
+			}
+		}
+	}
+	\caption{{\sc LocalSearch} modifica una solución con varias iteraciones de búsqueda local con primer mejor.}
+	\label{alg:local-search}
+\end{algorithm}
 
 \pagebreak
 
 \section{Descripción de los algoritmos}
 
-TODO
+\subsection{Enfriamiento Simulado}
+
+Para implementar el algoritmo de Enfriamiento Simulado, hemos separado los operadores de generación de vecino y
+salto. 
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Solución de partida $S$.}
+	\KwOut{Índice del elemento a eliminar.}
+	\KwOut{Elemento a añadir.}
+	\KwOut{Diferencia de fitness entre el vecino y la solución $S$.}
+	$index\_out\gets\text{entero aleatorio entre 0 y $|S|-1$}$\;
+	$elem\_in\gets\text{elemento aleatorio entre 0 y $n-1$}$\;
+	\While{$elem\_in\in S$}{
+		$elem\_in\gets\text{elemento aleatorio entre 0 y $n-1$}$\;
+	}
+	$contrib\_in\gets\operatorname{contrib}(S,D,elem\_in)-D[elem\_in,S[index\_out]]$\tcp*{Contribución del nuevo elemento, no hay que contar su distancia al que vamos a quitar.}
+	$contrib\_out\gets\operatorname{contrib}(S,D,S[index\_out])$\;
+	$delta\gets contrib\_in-contrib\_out$\;
+	$EVALS\gets EVALS+1$\;
+	
+	\Return{$elem\_in$}\;
+	\Return{$index\_out$}\;
+	\Return{$delta$}\;
+	\caption{{\sc MUTATE} genera un vecino aleatorio en un entorno de la solución y calcula la diferencia de fitness.}
+	\label{alg:mutate-es}
+\end{algorithm}
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Solución de partida $S$.}
+	\KwIn{Índice del elemento a eliminar: $index\_out$.}
+	\KwIn{Elemento a añadir: $elem\_in$.}
+	\KwIn{Diferencia de fitness entre el vecino y la solución $S$: $delta$.}
+	\KwOut{Nueva solución (no devuelve nada, modifica $S$).}
+	$S[index\_out]\gets elem\_in$\;
+	$S.fitness\gets S.fitness+delta$\;	
+	\caption{{\sc JUMP} desplaza la solución al vecino indicado.}
+	\label{alg:jump-es}
+\end{algorithm}
 
 \pagebreak
 
@@ -227,7 +307,7 @@ diferentes del conjunto. Por comodidad, también calculamos el complementario.
 	\Return{$S$}\;
 	\Return{$E$} \tcp*{El complementario}
 	\caption{{\sc RandomSol} proporciona una solución válida aleatoria}
-	\label{alg:randomsol}
+	\label{alg:randomsol-ls}
 \end{algorithm}
 
 Lo siguiente que necesitamos es un método para generar las soluciones del entorno. Estas soluciones se consiguen sustituyendo
@@ -251,7 +331,7 @@ el menor contribuyente de la solución actual por otro candidato. Presentamos el
 	\Return{$lowest$}\;
 	\Return{$min\_contrib$}\;
 	\caption{{\sc lowestContrib} obtiene el elemento de $S$ que menos contribuye en la valoración.}
-	\label{alg:lowest-contributor}
+	\label{alg:lowest-contributor-ls}
 \end{algorithm}
 
 En el caso de que $S$ se represente como un conjunto, no sabemos cuál será el primer elemento (depende de la implementación del iterador). Pero
@@ -300,7 +380,7 @@ objetivo: $LIMIT=100000$. Las soluciones del entorno se generan aleatoriamente.
 	\Return{$S$}\;
 	\Return{$fitness$}\;
 	\caption{{\sc LocalSearch}}
-	\label{alg:local-search}
+	\label{alg:local-searchls}
 \end{algorithm}
 
 Cabe destacar que en este algoritmo se calcula la fitness factorizando. Esto acelera mucho los cálculos, ya que hay que evaluar muchas soluciones diferentes.
