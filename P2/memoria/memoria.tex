@@ -342,7 +342,7 @@ y $limit=400$ (límite de evaluaciones en una búsqueda local).
 	\While{carryon}{
 		$carryon \gets false$\;
 		$lowest\gets \text{indice del elemento de $S$ que menos contribuye, minimiza $\operatorname{contrib}(S,D,S[lowest])$}$\;
-		%$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$
+		$min\_contrib \gets \operatorname{contrib}(S,D,lowest)$
 		$E \gets \operatorname{shuffle}(E)$ \tcp*{Para explorar los posibles vecinos en orden aleatorio.}
 		\For{$e$ \textbf{in} $E$} {
 			\If{$e\in S$}{
