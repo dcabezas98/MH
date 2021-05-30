@@ -178,6 +178,10 @@ conjunto de todos los elementos es el $\{0,\ldots , n-1\}$, para cuando nos refi
  subconjunto
 de ellos.
 
+En esta práctica implementaremos 4 algoritmos basados en trayectorias, y los compararemos entre sí y con la búsqueda local y el greedy de la práctica 1.
+Adicionalmente, compararemos para el Enfriamiento Simulado el esquema de Cauchy Modificado con el enfriamiento proporcional, también en la
+hibridación con ILS.
+
 Todos los algoritmos de esta práctica parten de soluciones aleatorias. La siguiente función permite construir
 las soluciones aleatorias que utilizaremos como partida.
 
@@ -195,7 +199,7 @@ las soluciones aleatorias que utilizaremos como partida.
 	\label{alg:randomsol}
 \end{algorithm}
 
-La mayoría de algoritmos implementados en esta práctica hacen uso de la búsqueda local. El siguiente algoritmo
+La mayoría de algoritmos implementados en esta práctica hacen uso de la búsqueda local (con primer mejor). El siguiente algoritmo
 implementa esta búsqueda. Supondremos declaradas las variables globales $LIMIT$, que valdrá 100000 o 10000 dependiendo
 de si el problema es de trayectoria simple o múltiple; y $EVALS$, las evaluaciones hasta el momento, esta variable
 comienza a 0 y sólo es reseteada en los problemas de trayectorias múltiples (donde $LIMIT$ vale 10000), y se resetea
@@ -256,7 +260,6 @@ salto.
 	$contrib\_out\gets\operatorname{contrib}(S,D,S[index\_out])$\;
 	$delta\gets contrib\_in-contrib\_out$\;
 	$EVALS\gets EVALS+1$\;
-	
 	\Return{$elem\_in$}\;
 	\Return{$index\_out$}\;
 	\Return{$delta$}\;
@@ -277,9 +280,187 @@ salto.
 	\label{alg:jump-es}
 \end{algorithm}
 
-\pagebreak
+En este caso, el número de evaluaciones no se se resetea, y el límite se fija en 100000.
+El cuerpo del algoritmo queda de la siguiente forma.
 
-\subsection{Búsqueda local}
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwOut{Una solución factible obtenida por enfriamiento simulado con Cauchy Modificado.}
+	$exitos\gets 1$ \tcp*{Para que entre la primera vez en el bucle}
+	$max\_vecinos\gets 10n$\;
+	$\max\_exitos\gets 0.1*max\_vecinos$\;
+	$best\_fitness\gets 0$\;
+	$M\gets LIMIT/max\_vecinos$\;
+	$S\gets \operatorname{randomSol}$\;
+	$\operatorname{evaluate}(S)$ \tcp*{Asigna $S.fitness\gets\operatorname{fitness}(S)$.}
+	$EVALS\gets EVALS+1$\;
+	$mu\gets 0.3$\;
+	$phi\gets 0.3$\;
+	$T\gets -mu\cdot S.fitness/\log phi$ \tcp*{Temperatura inicial}
+	$T_f\gets 10^{-3}$\;
+	\While{$T<T_f$}{
+		$T_f\gets T_f/10$ \tcp*{La temperatura final debe ser menor que la inicial}
+	}
+	$beta\gets (T-T_f)/(M\cdot T\cdot T_f)$\;
+	\While{$exitos>0$ and $EVALS<LIMIT$}{
+		$exitos\gets 0$\;
+		$vecinos\gets 0$\;
+		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$}{
+			$index\_out, elem\_in, delta \gets \operatorname{mutate}(S)$\;
+			$vecinos\gets vecinos+1$\;
+			$x\gets\text{número aleatorio en una uniforme $[0,1]$}$\;
+			\If{$delta>0$ or $x\leq \exp(delta/T)$}{
+				$\operatorname{jump}(S,index\_out, elem\_in, delta)$\;
+				$exitos\gets exitos+1$\;
+				\If{$S.fitness>best\_fitness$}{
+					$best\_sol\gets S$ \tcp*{En realidad sólo guardo la fitness, no la solución}
+					$best\_fitness \gets S.fitness$\;
+				}
+			}
+		}
+		$T\gets T/(1+beta\cdot T)$ \tcp*{Enfriamiento}
+	}
+	\Return{$best\_sol$}\;
+	\caption{{\sc EnfriamientoSimulado}}
+	\label{alg:es}
+\end{algorithm}
+
+También incorporamos una comparación con el esquema de enfriamiento proporcional. La única diferencia es que el enfriamiento pasa a ser
+$T\gets 0.9\cdot T$, y sobran $M$ y $beta$.
+
+\subsection{Búsqueda Multiarranque Básica}
+
+Este algoritmo se limita a ejecutar 10 búsquedas locales, cada una con 10000 evaluaciones ($LIMIT=10000$ y $EVALS$ se resetea a 0 para
+cada búsqueda), al final nos quedamos con la mejor de las 10 soluciones alcanzadas.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwOut{Una solución factible obtenida por Búsqueda Multiarranque Básica.}
+	$best\_fitness\gets 0$\;
+	\For{$i=0,\ldots,9$}{
+		$EVALS\gets 0$\;
+		$S\gets \operatorname{randomSol}$\;
+		$\operatorname{evaluate}(S)$ \tcp*{Asigna $S.fitness\gets\operatorname{fitness}(S)$.}
+		$EVALS\gets EVALS+1$\;
+		$\operatorname{localSearch}(S)$\;		
+		\If{$S.fitness>best\_fitness$}{
+			$best\_sol\gets S$ \tcp*{En realidad sólo guardo la fitness, no la solución}
+			$best\_fitness \gets S.fitness$\;
+		}
+	}
+	\Return{$best\_sol$}\;
+	\caption{{\sc BMB}}
+	\label{alg:bmb}
+\end{algorithm}
+
+\subsection{Búsqueda Local Reiterada}
+
+Para este algoritmo, necesitamos el siguiente operador de mutación. Se eliminan aleatoriamente $t$ elementos de $S$ (los $t$ primeros
+tras barajar) y se sustituyen por $t$ elementos de fuera elegidos aleatoriamente.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Solución de partida $S$.}
+	\KwIn{Número de elementos a modificar: $t$.}
+	\KwOut{Modifica (no devuelve) $t$ elementos aleatorios de $S$.}
+	$E\gets\{0,\ldots,n-1\}$\;
+	$\operatorname{shuffle}(S)$\;
+	$\operatorname{shuffle}(E)$\;
+	$new\gets\emptyset$\;
+	$j\gets 0$\;
+	\While{$|new|<t$}{
+		\If{$E[j]\notin S$}{
+			$new\gets new\cup\{E[j]\}$\;
+		}
+		$j\gets j+1$\;
+	}
+	\For{$j=0,\ldots,|new|-1$}{
+		$S[j]\gets new[j]$\;
+	}
+	$\operatorname{evaluate}(S)$\;
+	$EVALS\gets EVALS+1$\;
+	\caption{{\sc MUTATE} modifica la solución cambiando el 10\% de los elementos seleccionados por elementos aleatorios
+		de fuera.}
+	\label{alg:mutate-ils}
+\end{algorithm}
+
+El algoritmo ILS es similar al anterior, la diferencia es que cada solución parte de una mutación aleatoria de la mejor encontrada.
+El límite de ejecucioes es 10000, y se resetea el número de evaluaciones 10 veces.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwOut{Una solución factible obtenida por Búsqueda Local Reiterada.}
+	$t\gets 0.1\cdot m$\;
+	$best\_sol\gets \operatorname{randomSol}$\;
+	$\operatorname{evaluate}(best\_sol)$\;
+	$best\_fitness\gets 0$\;
+	\For{$i=0,\ldots,9$}{
+		$EVALS\gets 0$\;
+		$S\gets best\_sol$\;
+		$\operatorname{mutate}(S,t)$\;
+		$\operatorname{localSearch}(S)$\;		
+		\If{$S.fitness>best\_fitness$}{
+			$best\_sol\gets S$ \;
+			$best\_fitness \gets S.fitness$\;
+		}
+	}
+	\Return{$best\_sol$}\;
+	\caption{{\sc ILS}}
+	\label{alg:ils}
+\end{algorithm}
+
+Esta implementación realiza $100001$ iteraciones en lugar de $100000$, e igual le ocurre a la siguiente variante. Aunque esto no
+es relevante para el comportamiento del algoritmo.
+
+\subsection{Híbridación ILS-ES}
+
+Este algoritmo es idéntico al anterior, con la diferencia de que utiliza Enfriamiento Simulado en lugar de Búsqueda Local.
+Para ello, necesitamos una variante del Algoritmo \ref{alg:es} que modifique una solución de entrada en lugar de generar una
+nueva.
+
+\begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Una solución factible de partida: $S$.}
+	\KwOut{La solución $S$ modificada con varias iteraciones de Enfriamiento Simulado con Cauchy Modificado.}
+	$exitos\gets 1$ \tcp*{Para que entre la primera vez en el bucle}
+	$max\_vecinos\gets 10n$\;
+	$\max\_exitos\gets 0.1*max\_vecinos$\;
+	$M\gets LIMIT/max\_vecinos$\;
+	$EVALS\gets EVALS+1$\;
+	$mu\gets 0.3$\;
+	$phi\gets 0.3$\;
+	$T\gets -mu\cdot S.fitness/\log phi$ \tcp*{Temperatura inicial}
+	$T_f\gets 10^{-3}$\;
+	\While{$T<T_f$}{
+		$T_f\gets T_f/10$ \tcp*{La temperatura final debe ser menor que la inicial}
+	}
+	$beta\gets (T-T_f)/(M\cdot T\cdot T_f)$\;
+	\While{$exitos>0$ and $EVALS<LIMIT$}{
+		$exitos\gets 0$\;
+		$vecinos\gets 0$\;
+		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$}{
+			$index\_out, elem\_in, delta \gets \operatorname{mutate}(S)$\;
+			$vecinos\gets vecinos+1$\;
+			$x\gets\text{número aleatorio en una uniforme $[0,1]$}$\;
+			\If{$delta>0$ or $x\leq \exp(delta/T)$}{
+				$\operatorname{jump}(S,index\_out, elem\_in, delta)$\;
+				$exitos\gets exitos+1$\;
+			}
+		}
+		$T\gets T/(1+beta\cdot T)$ \tcp*{Enfriamiento}
+	}
+	\Return{$best\_sol$}\;
+	\caption{{\sc EnfriamientoSimulado}}
+	\label{alg:es-ils}
+\end{algorithm}
+
+Con esta nueva implementación, el cuerpo del algoritmo ILS-ES es exactamente igual al de ILS (Algoritmo \ref{alg:ils}) pero
+cambiando localSearch$(S)$ por enfriamientoSimulado$(S)$.
+
+También incluimos la comparación con el modelo de enfriamiento proporcional. Como el número de enfriamientos va a ser es mucho menor,
+en lugar de 0.9 usamos 0.5: $T\gets 0.5\cdot T$. Esto quizá enfríe demasiado rápido.
+
+\subsection{Búsqueda Local}
 
 Procedemos con la descripción del algoritmo de Búsqueda Local que se nos ha presentado en el seminario. 
 Este algoritmo utiliza la técnica del Primer Mejor, en la que se van generando soluciones en el entorno de la actual y se
@@ -457,6 +638,8 @@ Para representar la soluciones hemos hecho uso del tipo \texttt{vector}.
 La mayoría de operadores (mutación, generación de vecino, salto, búsqueda local) se implementan como métodos de una 
 clase Solucion.
 
+En el enfriamiento simulado, se utilizan las funciones exponencial y logaritmo neperiano de la biblioteca \texttt{math.h}.
+
 Para medir los tiempos de ejecución se utiliza la función \texttt{clock} de la librería \texttt{time.h}.
 
 A lo largo de la práctica se utilizan acciones aleatorias. Utilizamos la librería \texttt{stdlib.h} para la generación de
@@ -477,7 +660,12 @@ A continuación detallamos instrucciones para lanzar los ejecutables.
 Tenemos los siguientes ejecutables:
 
 \begin{itemize}
-\item TODO
+\item \textbf{ES:} Enfriamiento Simulado con Cauchy Modificado.
+\item \textbf{ES-proporcional:} Enfriamiento Simulado con enfriamiento proporcional.
+\item \textbf{BMB:} Búsqueda Multiarranque Básica.
+\item \textbf{ILS:} Búsqueda Local Reiterada.
+\item \textbf{ILS-ES:} Hibridación de ILS y Enfriamiento Simulado con Cauchy Modificado.
+\item \textbf{ILS-ES-proporcional:} Hibridación de ILS y Enfriamiento Simulado con enfriamiento proporcional. 
 \end{itemize}
 
 Todos ellos devuelven la evaluación de la solución obtenida y el tiempo de ejecución por salida estándar.
