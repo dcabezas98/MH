@@ -1297,10 +1297,20 @@ Como hemos comentado antes, todos los algoritmos estudiados en esta práctica so
 que los basados en trayectorias múltiples: ILS-ES-CM es más lento que ES-CM y ILS y BMB son más lentos que BL. Esto
 se debe a que necesitan inicializar la búsqueda 10 veces en lugar de sólo 1, y generar una solución aleatoria lleva tiempo.
 
-TODO
+En cuanto a fitness, los algoritmos de trayectoria múltiple (exceptuando a ILS-ES, hemos comentado anteriormente la razón
+de que estos algorimtos no tengan buena sinergia) superan no solo a los de trayectorias simples sino también a todos los poblacionales que implementamos en la práctica anterior (el mejor fue un memético que consiguió 1.09 de desviación).
+Por tanto, podemos concluir que merece más la pena realizar varios intentos de búsqueda local que invertir todas las
+evaluaciones en mejorar una solución lo máximo posible. Es mejor aumentar la posibilidad de caer ``cerca'' de un máximo local
+muy alto que alcanzar el máximo y que no sea tan alto.
 
 \subsubsection*{ILS vs BMB}
 
-TODO: Es más costoso generar una solución aleatorio nueva que partir de una mutación
+Como acabamos de comentar, parece provechoso no invertir todas las evaluaciones en mejorar una solución lo máximo posible.
+Sin embargo, en lugar de realizar intentos aleatorios independientes como BMB, ha resultado bastante mejor partir desde
+una mutación (bastante fuerte) de la mejor solución encontrada hasta el momento. Es decir, de una solución (medianamente
+lejana) de su entorno. Esto es lo que hace ILS y supera con cierto margen al resto de algoritmos que hemos estudiado.
+
+En cuanto a tiempo, ILS es mucho más rápido que BMB. Esto se debe a los tiempos que necesitan para inicializar cada
+búsqueda. Es más costoso generar una solución aleatoria nueva que mutar una solución existente.
 
 \end{document}
