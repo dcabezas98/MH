@@ -457,6 +457,10 @@ nueva.
 Con esta nueva implementación, el cuerpo del algoritmo ILS-ES es exactamente igual al de ILS (Algoritmo \ref{alg:ils}) pero
 cambiando localSearch$(S)$ por enfriamientoSimulado$(S)$.
 
+Hay que tener cuidado, ya que hemos usado un nombre confuso para algunas funciones. El operador Mutate llamado por el Enfriamiento
+Simulado busca un vecino y calcula el cambio de fitness, corresponde al Algoritmo \ref{alg:mutate-es}. Sin embargo, el operador
+Mutate invocado por ILS corresponde al Algoritmo \ref{alg:mutate-ils}.
+
 También incluimos la comparación con el modelo de enfriamiento proporcional. Como el número de enfriamientos va a ser es mucho menor,
 en lugar de 0.9 usamos 0.5: $T\gets 0.5\cdot T$. Esto quizá enfríe demasiado rápido.
 
@@ -842,7 +846,7 @@ Media de los estadísticos:
 	\end{tabular}
 	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Búsqueda Local
 		con Primer Mejor en cada caso de estudio.}
-	\label{tab:bs-primer-mejor}
+	\label{tab:ls-primer-mejor}
 \end{table}
 
 Media de los estadísticos:
@@ -1220,6 +1224,83 @@ de búsqueda local (con primer mejor) y greedy de la primera práctica.
 
 \subsection{Análisis de resultados}
 
+\subsubsection*{Tiempos}
+
+Lo primero que debemos destacar es que los tiempos de estos algoritmos son muy inferiores a los obtenidos por los algoritmos
+poblacionales de la práctica anterior (cuyo tiempo medio oscilaba entre 40 y 90 segundos), esto se debe principalmente
+a que todos los algoritmos basados en trayectorias utilizan la factorización de la función de fitness. El algoritmo que 
+más tiempo consume es BMB, supongo que por tener que generar varias soluciones aleatorias. Sin embargo, su tiempo de cómputo
+también es prácticamente despreciable en comparación con los algoritmos poblacionales.
+
+\subsubsection*{Enfriamiento Proporcional vs Cauchy Modificado}
+El esquema de enfriamiento de Cauchy Modificado enfría muy rápido al principio. En los ejemplos del grupo MDG-a, la temperatura inicial
+ronda los 1400 ó 1500, y tras un enfriamiento es cercana a 0.2, siendo los posteriores enfriamientos más paulatinos. Es por esto
+que sospechamos que el Enfriamiento Proporcional, más paulatino, iba a obtener mejores resultados. Ajustamos un coeficiente
+de enfriamiento $\alpha=0.9$ a ojo, observando un par de ejecuciones del grupo MDG-a con otras semillas distintas, lo cual
+ha resultado ser un fracaso.
+
+Como podemos observar en las Tablas \ref{tab:es} y \ref{tab:es-proporcional}, el enfriamiento proporcional obtiene desviaciones
+mucho más bajas en los ejemplos del grupo MDG-a, pero su desempeño es desastroso en los ejemplos de los grupos MDG-b y MDG-c.
+
+Para un grupo de ejemplos concretos, podemos encontrar un coeficiente de modo que el enfriamiento proporcional supere a
+Cauchy modificado, al menos en los grupos MDG-a y MDG-c, donde todos los ejemplos tienen los mismos parámetros. Sin embargo,
+la gran ventaja del enfriamiento proporcional es que adapta sus parámetros al número de iteraciones esperado (en función
+del número de evaluaciones y de la dimensionalidad del problema), mientras que un valor fijo para el enfriamiento proporcional
+no produce resultados satisfactorios para los posibles distintos tamaños del problema.
+
+En la Tabla \ref{tab:es-proporcional} observamos que los ejemplos del grupo MDG-b son los peores para el enfriamiento
+proporcional. En los ejemplos del grupo MDG-c, la desviación (sin dejar de ser demasiado alta) va decreciendo cuando
+mantenemos el parámetro $n$ y vamos incrementando el $m$, lo que parece indicar que su desempeño es peor cuanto menor sea
+(en proporción) el subconjunto a seleccionar, al menos para el parámetro $\alpha=0.9$.
+
+En la hibridación de ES con ILS, el número de iteraciones es menor en cada ejecución de ES, por lo que Cauchy modificado
+se adapta enfriando aún más rápido mientras que tenemos dificultades para ajustar el parámetro $\alpha=0.5$, con el que ocurre
+lo mismo que en el caso anterior, esta vez incluso con resultados peores en los ejemplos del grupo MDG-a (Tablas \ref{tab:ils-es} y \ref{tab:ils-es-proporcional}).
+
+En tiempo no hay mucha diferencia en la ejecución, pero sí que la hay en la inicialización de los parámetros (el esquema
+proporcional no requiere inicializar $M$, $T_f$ y $beta$), esto se aprecia al combinarlo con ILS, ya que la inicialización
+se realiza 10 veces y el esquema proporcional saca una ventaja de tiempo, que por supuesto no compensa su alta desviación.
+
+Este experimento nos ha servido para apreciar la facilidad de adaptación del esquema de Cauchy modificado a la hora de enfriar.
+A partir de ahora, siempre consideraremos este esquema. Ignoraremos los algoritmos ES-prop y ILS-ES-prop por el resto del
+análisis.
+
+\subsubsection*{Búsqueda Local vs Enfriamiento Simulado}
+
+Primero los comparamos en sus versiones simples: Tabla \ref{tab:ls-primer-mejor} frente a Tabla \ref{tab:es}.
+
+El algoritmo de Enfriamiento Simulado es bastante más rápido que el de Búsqueda Local, esto se debe principalmente a que ES
+busca vecinos aleatorios mientras LS tiene que calcular el menor contribuyente para cada salto. Esto hace que los saltos de
+LS produzcan una mayor mejora en la fitness, por lo que sus 100000 iteraciones se invierten en mejorar la solución en mayor
+medida que las de ES.
+
+El desempeño de ES es ligeramente peor, pero como acabamos de explicar las iteraciones de LS son más costosas, de modo
+que quizá deberíamos haber permitido a ES realizar más iteraciones para que esta comparación fuese más justa.
+
+La cosa cambia cuando los consideramos en combinación con ILS: Tablas \ref{tab:ils} y \ref{tab:ils-es}.
+
+A pesar de que ES sigue siendo ligeramente más rápido, esta diferencia se nota menos en este caso. Probablemente es debido
+a que la inicialización de ES es más lenta, y aquí se tiene que inicializar 10 veces en lugar de 1.
+
+Además, aquí si hay una gran mejora de la Búsqueda Local. El ES permite que la solución empeore en sus primeras etapas, y el
+número de iteraciones en cada ejecución es demasiado bajo. Aunque el esquema de Cauchy Modificado permite que se adapte para
+enfriar más rápido ante un menor número de iteraciones, no tiene suficientes iteraciones para que la fase de explotación
+(cuando la temperatura es muy baja) dé sus frutos.
+
+Aun así, ocurre el mismo problema que comentamos antes, puede que esta
+comparación no sea justa del todo, ya que una iteración de LS es bastante más costosa por tener que calcular el menor contribuyente. Sin embargo, en esta ocación la diferencia de tiempo no compensa en absoluto la diferencia de desviación.
+
+\subsubsection*{Trayectorias Simples vs Múltiples}
+
+Como hemos comentado antes, todos los algoritmos estudiados en esta práctica son relativamente rápidos. Sin embargo
+(ignorando el Greedy, que no es de trayectoria), los algoritmos basados en trayectorias múltiples son algo más lentos
+que los basados en trayectorias múltiples: ILS-ES-CM es más lento que ES-CM y ILS y BMB son más lentos que BL. Esto
+se debe a que necesitan inicializar la búsqueda 10 veces en lugar de sólo 1, y generar una solución aleatoria lleva tiempo.
+
 TODO
+
+\subsubsection*{ILS vs BMB}
+
+TODO: Es más costoso generar una solución aleatorio nueva que partir de una mutación
 
 \end{document}
