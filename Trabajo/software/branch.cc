@@ -39,7 +39,7 @@ void clip(vector<double> &sol, int lower=-100, int upper=100) {
   }
 }
 
-int branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals, mt19937 &gen){
+void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals, mt19937 &gen){
   const size_t dim = sol.size();
 
   float p;
@@ -53,7 +53,7 @@ int branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals,
   if (fitness < best) best=fitness;
 
   while(evals>0){
-    dif = fitness-best;
+    dif = cec17_error(fitness);
     p = prob(gen);
 
     cout << "Prob Truncar: " << dif/(best*cel) << endl; 
