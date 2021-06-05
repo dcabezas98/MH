@@ -144,7 +144,7 @@ int main() {
         double fitness;
 
         //cout << "\nINIT: " << funcid << "\n" << endl;
-        cec17_init("branch", funcid, dim);
+        cec17_init("hybrid", funcid, dim);
         spare_evals=dim*10000;
 
         best=MAXFLOAT;
