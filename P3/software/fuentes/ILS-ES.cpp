@@ -172,7 +172,7 @@ class Solution {
       while(exitos>0 && EVALS<LIMIT){
         exitos=0;
         vecinos=0;
-        while(vecinos<max_vecinos && exitos<max_exitos){
+        while(vecinos<max_vecinos && exitos<max_exitos && EVALS<LIMIT){
           neighbor(index_out, elem_in, delta, mat);
           vecinos++;
           if(delta>0 || randF() <= exp(delta/T)){

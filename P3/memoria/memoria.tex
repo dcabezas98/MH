@@ -305,7 +305,7 @@ El cuerpo del algoritmo queda de la siguiente forma.
 	\While{$exitos>0$ and $EVALS<LIMIT$}{
 		$exitos\gets 0$\;
 		$vecinos\gets 0$\;
-		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$}{
+		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$ and $EVALS<LIMIT$}{
 			$index\_out, elem\_in, delta \gets \operatorname{mutate}(S)$\;
 			$vecinos\gets vecinos+1$\;
 			$x\gets\text{número aleatorio en una uniforme $[0,1]$}$\;
@@ -438,7 +438,7 @@ nueva.
 	\While{$exitos>0$ and $EVALS<LIMIT$}{
 		$exitos\gets 0$\;
 		$vecinos\gets 0$\;
-		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$}{
+		\While{$vecinos < max\_vecinos$ and $exitos<max\_exitos$ and $EVALS<LIMIT$}{
 			$index\_out, elem\_in, delta \gets \operatorname{mutate}(S)$\;
 			$vecinos\gets vecinos+1$\;
 			$x\gets\text{número aleatorio en una uniforme $[0,1]$}$\;
@@ -869,36 +869,36 @@ Media de los estadísticos:
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7670.07 & 2.09 & 0.006072\\
-		MDG-a\_2\_n500\_m50 & 7605.52 & 2.14 & 0.00734\\
-		MDG-a\_3\_n500\_m50 & 7640.15 & 1.54 & 0.004435\\
-		MDG-a\_4\_n500\_m50 & 7506.45 & 3.39 & 0.002631\\
-		MDG-a\_5\_n500\_m50 & 7595.3 & 2.06 & 0.007672\\
-		MDG-a\_6\_n500\_m50 & 7513.32 & 3.35 & 0.002595\\
-		MDG-a\_7\_n500\_m50 & 7531.44 & 3.09 & 0.00346\\
-		MDG-a\_8\_n500\_m50 & 7609.81 & 1.82 & 0.007511\\
-		MDG-a\_9\_n500\_m50 & 7654.97 & 1.48 & 0.006011\\
-		MDG-a\_10\_n500\_m50 & 7707.51 & 0.94 & 0.012247\\
-		MDG-b\_21\_n2000\_m200 & 11155738.985299 & 1.28 & 0.186285\\
-		MDG-b\_22\_n2000\_m200 & 11164122.435074 & 1.09 & 0.184283\\
-		MDG-b\_23\_n2000\_m200 & 11177722.312113 & 1.08 & 0.180047\\
-		MDG-b\_24\_n2000\_m200 & 11124330.872795 & 1.48 & 0.175191\\
-		MDG-b\_25\_n2000\_m200 & 11181796.14402 & 1.01 & 0.175225\\
-		MDG-b\_26\_n2000\_m200 & 11157826.838857 & 1.19 & 0.176321\\
-		MDG-b\_27\_n2000\_m200 & 11165835.734422 & 1.24 & 0.177808\\
-		MDG-b\_28\_n2000\_m200 & 11119034.565327 & 1.43 & 0.174686\\
-		MDG-b\_29\_n2000\_m200 & 11163768.720372 & 1.18 & 0.175868\\
-		MDG-b\_30\_n2000\_m200 & 11148372.956175 & 1.31 & 0.174758\\
-		MDG-c\_1\_n3000\_m300 & 24637456 & 0.99 & 0.418843\\
-		MDG-c\_2\_n3000\_m300 & 24595823 & 1.24 & 0.416247\\
-		MDG-c\_8\_n3000\_m400 & 43042008 & 0.91 & 0.515977\\
-		MDG-c\_9\_n3000\_m400 & 43044732 & 0.91 & 0.51509\\
-		MDG-c\_10\_n3000\_m400 & 43031426 & 1.02 & 0.514451\\
-		MDG-c\_13\_n3000\_m500 & 66556889 & 0.68 & 0.602169\\
-		MDG-c\_14\_n3000\_m500 & 66646003 & 0.5 & 0.598817\\
-		MDG-c\_15\_n3000\_m500 & 66693908 & 0.45 & 0.605126\\
-		MDG-c\_19\_n3000\_m600 & 95013094 & 0.65 & 0.672743\\
-		MDG-c\_20\_n3000\_m600 & 94941193 & 0.73 & 0.664133\\
+		MDG-a\_1\_n500\_m50 & 7670.07 & 2.09 & 0.005823\\
+		MDG-a\_2\_n500\_m50 & 7605.52 & 2.14 & 0.007832\\
+		MDG-a\_3\_n500\_m50 & 7640.15 & 1.54 & 0.004418\\
+		MDG-a\_4\_n500\_m50 & 7506.45 & 3.39 & 0.002632\\
+		MDG-a\_5\_n500\_m50 & 7595.3 & 2.06 & 0.007541\\
+		MDG-a\_6\_n500\_m50 & 7513.32 & 3.35 & 0.002652\\
+		MDG-a\_7\_n500\_m50 & 7531.44 & 3.09 & 0.00347\\
+		MDG-a\_8\_n500\_m50 & 7609.81 & 1.82 & 0.007455\\
+		MDG-a\_9\_n500\_m50 & 7654.97 & 1.48 & 0.005809\\
+		MDG-a\_10\_n500\_m50 & 7707.51 & 0.94 & 0.010037\\
+		MDG-b\_21\_n2000\_m200 & 11153491.077362 & 1.3 & 0.181717\\
+		MDG-b\_22\_n2000\_m200 & 11164122.435074 & 1.09 & 0.180099\\
+		MDG-b\_23\_n2000\_m200 & 11177722.312113 & 1.08 & 0.176103\\
+		MDG-b\_24\_n2000\_m200 & 11123656.222893 & 1.48 & 0.173215\\
+		MDG-b\_25\_n2000\_m200 & 11181796.14402 & 1.01 & 0.171988\\
+		MDG-b\_26\_n2000\_m200 & 11157826.838857 & 1.19 & 0.173737\\
+		MDG-b\_27\_n2000\_m200 & 11165835.734422 & 1.24 & 0.175025\\
+		MDG-b\_28\_n2000\_m200 & 11117125.98953 & 1.44 & 0.1719\\
+		MDG-b\_29\_n2000\_m200 & 11163768.720372 & 1.18 & 0.174286\\
+		MDG-b\_30\_n2000\_m200 & 11148372.956175 & 1.31 & 0.172032\\
+		MDG-c\_1\_n3000\_m300 & 24629537 & 1.02 & 0.330541\\
+		MDG-c\_2\_n3000\_m300 & 24583307 & 1.29 & 0.327877\\
+		MDG-c\_8\_n3000\_m400 & 43021119 & 0.96 & 0.409009\\
+		MDG-c\_9\_n3000\_m400 & 43029662 & 0.94 & 0.407065\\
+		MDG-c\_10\_n3000\_m400 & 43016458 & 1.06 & 0.408088\\
+		MDG-c\_13\_n3000\_m500 & 66537801 & 0.71 & 0.472688\\
+		MDG-c\_14\_n3000\_m500 & 66612608 & 0.55 & 0.469757\\
+		MDG-c\_15\_n3000\_m500 & 66674765 & 0.47 & 0.469974\\
+		MDG-c\_19\_n3000\_m600 & 94961970 & 0.7 & 0.544639\\
+		MDG-c\_20\_n3000\_m600 & 94903837 & 0.77 & 0.528779\\
 		\hline
 	\end{tabular}
 	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Enfriamiento Simulado con Cauchy modificado en cada caso de estudio.}
@@ -911,7 +911,7 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		 1.41 & 0.25 \\
+		 1.42 & 0.21 \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -925,36 +925,36 @@ Media de los estadísticos:
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7822.51 & 0.14 & 0.017657\\
-		MDG-a\_2\_n500\_m50 & 7622.47 & 1.92 & 0.017737\\
-		MDG-a\_3\_n500\_m50 & 7687.45 & 0.93 & 0.018346\\
-		MDG-a\_4\_n500\_m50 & 7721.95 & 0.62 & 0.018346\\
-		MDG-a\_5\_n500\_m50 & 7691.9 & 0.82 & 0.017978\\
-		MDG-a\_6\_n500\_m50 & 7725.73 & 0.62 & 0.017659\\
-		MDG-a\_7\_n500\_m50 & 7666.35 & 1.36 & 0.018872\\
-		MDG-a\_8\_n500\_m50 & 7654.96 & 1.24 & 0.018646\\
-		MDG-a\_9\_n500\_m50 & 7700.72 & 0.89 & 0.018478\\
-		MDG-a\_10\_n500\_m50 & 7747.54 & 0.42 & 0.01974\\
-		MDG-b\_21\_n2000\_m200 & 10162614.655392 & 10.06 & 0.209395\\
-		MDG-b\_22\_n2000\_m200 & 10173535.392627 & 9.86 & 0.210087\\
-		MDG-b\_23\_n2000\_m200 & 10155768.757838 & 10.13 & 0.210103\\
-		MDG-b\_24\_n2000\_m200 & 10153786.637714 & 10.07 & 0.209786\\
-		MDG-b\_25\_n2000\_m200 & 10205945.840977 & 9.65 & 0.209136\\
-		MDG-b\_26\_n2000\_m200 & 10186840.609219 & 9.79 & 0.209538\\
-		MDG-b\_27\_n2000\_m200 & 10178369.828872 & 9.97 & 0.210577\\
-		MDG-b\_28\_n2000\_m200 & 10165757.250428 & 9.88 & 0.209549\\
-		MDG-b\_29\_n2000\_m200 & 10166804.326253 & 10.01 & 0.20924\\
-		MDG-b\_30\_n2000\_m200 & 10167455.620431 & 9.99 & 0.210194\\
-		MDG-c\_1\_n3000\_m300 & 22710993 & 8.73 & 0.367478\\
-		MDG-c\_2\_n3000\_m300 & 22674638 & 8.96 & 0.365672\\
-		MDG-c\_8\_n3000\_m400 & 40198770 & 7.46 & 0.44825\\
-		MDG-c\_9\_n3000\_m400 & 40192167 & 7.47 & 0.448765\\
-		MDG-c\_10\_n3000\_m400 & 40208739 & 7.52 & 0.459702\\
-		MDG-c\_13\_n3000\_m500 & 62739982 & 6.38 & 0.524618\\
-		MDG-c\_14\_n3000\_m500 & 62722779 & 6.36 & 0.521154\\
-		MDG-c\_15\_n3000\_m500 & 62827242 & 6.22 & 0.519484\\
-		MDG-c\_19\_n3000\_m600 & 90250861 & 5.63 & 0.576816\\
-		MDG-c\_20\_n3000\_m600 & 90300816 & 5.59 & 0.576425\\
+		MDG-a\_1\_n500\_m50 & 7822.51 & 0.14 & 0.017223\\
+		MDG-a\_2\_n500\_m50 & 7622.47 & 1.92 & 0.017501\\
+		MDG-a\_3\_n500\_m50 & 7687.28 & 0.93 & 0.017603\\
+		MDG-a\_4\_n500\_m50 & 7721.95 & 0.62 & 0.017324\\
+		MDG-a\_5\_n500\_m50 & 7691.9 & 0.82 & 0.017419\\
+		MDG-a\_6\_n500\_m50 & 7725.73 & 0.62 & 0.017166\\
+		MDG-a\_7\_n500\_m50 & 7664.32 & 1.38 & 0.017268\\
+		MDG-a\_8\_n500\_m50 & 7654.96 & 1.24 & 0.017379\\
+		MDG-a\_9\_n500\_m50 & 7700.72 & 0.89 & 0.017494\\
+		MDG-a\_10\_n500\_m50 & 7736.47 & 0.56 & 0.017405\\
+		MDG-b\_21\_n2000\_m200 & 10162614.655392 & 10.06 & 0.205683\\
+		MDG-b\_22\_n2000\_m200 & 10155040.633824 & 10.03 & 0.205459\\
+		MDG-b\_23\_n2000\_m200 & 10138784.833135 & 10.28 & 0.205642\\
+		MDG-b\_24\_n2000\_m200 & 10153786.637714 & 10.07 & 0.206286\\
+		MDG-b\_25\_n2000\_m200 & 10163162.861106 & 10.03 & 0.204915\\
+		MDG-b\_26\_n2000\_m200 & 10158557.59055 & 10.04 & 0.205627\\
+		MDG-b\_27\_n2000\_m200 & 10161174.429393 & 10.12 & 0.20545\\
+		MDG-b\_28\_n2000\_m200 & 10146500.196885 & 10.05 & 0.206452\\
+		MDG-b\_29\_n2000\_m200 & 10166804.326253 & 10.01 & 0.205845\\
+		MDG-b\_30\_n2000\_m200 & 10167455.620431 & 9.99 & 0.20554\\
+		MDG-c\_1\_n3000\_m300 & 22710993 & 8.73 & 0.348398\\
+		MDG-c\_2\_n3000\_m300 & 22674638 & 8.96 & 0.347968\\
+		MDG-c\_8\_n3000\_m400 & 40198770 & 7.46 & 0.427377\\
+		MDG-c\_9\_n3000\_m400 & 40192167 & 7.47 & 0.426212\\
+		MDG-c\_10\_n3000\_m400 & 40208739 & 7.52 & 0.426514\\
+		MDG-c\_13\_n3000\_m500 & 62739982 & 6.38 & 0.490806\\
+		MDG-c\_14\_n3000\_m500 & 62722779 & 6.36 & 0.490771\\
+		MDG-c\_15\_n3000\_m500 & 62827242 & 6.22 & 0.491505\\
+		MDG-c\_19\_n3000\_m600 & 90250861 & 5.63 & 0.553255\\
+		MDG-c\_20\_n3000\_m600 & 90300816 & 5.59 & 0.553272\\
 		\hline
 	\end{tabular}
 	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo de Enfriamiento Simulado Proporcional en cada caso de estudio.}
@@ -967,7 +967,7 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		5.96 & 0.24 \\
+		6 & 0.23 \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -1093,36 +1093,36 @@ Media de los estadísticos:
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7668.88 & 2.11 & 0.018958\\
-		MDG-a\_2\_n500\_m50 & 7570.89 & 2.58 & 0.019275\\
-		MDG-a\_3\_n500\_m50 & 7629.52 & 1.67 & 0.019115\\
-		MDG-a\_4\_n500\_m50 & 7610.35 & 2.06 & 0.019151\\
-		MDG-a\_5\_n500\_m50 & 7558.51 & 2.54 & 0.019174\\
-		MDG-a\_6\_n500\_m50 & 7611.88 & 2.08 & 0.01904\\
-		MDG-a\_7\_n500\_m50 & 7595.01 & 2.27 & 0.018986\\
-		MDG-a\_8\_n500\_m50 & 7608.75 & 1.83 & 0.019084\\
-		MDG-a\_9\_n500\_m50 & 7637.98 & 1.7 & 0.019134\\
-		MDG-a\_10\_n500\_m50 & 7624.97 & 2 & 0.02031\\
-		MDG-b\_21\_n2000\_m200 & 11102518.768872 & 1.75 & 0.417906\\
-		MDG-b\_22\_n2000\_m200 & 11097704.226095 & 1.68 & 0.434521\\
-		MDG-b\_23\_n2000\_m200 & 11107942.10879 & 1.7 & 0.422667\\
-		MDG-b\_24\_n2000\_m200 & 11095329.156269 & 1.73 & 0.418913\\
-		MDG-b\_25\_n2000\_m200 & 11106612.269199 & 1.68 & 0.407629\\
-		MDG-b\_26\_n2000\_m200 & 11115693.739341 & 1.56 & 0.437994\\
-		MDG-b\_27\_n2000\_m200 & 11106412.843644 & 1.76 & 0.38352\\
-		MDG-b\_28\_n2000\_m200 & 11099474.468795 & 1.6 & 0.377382\\
-		MDG-b\_29\_n2000\_m200 & 11090079.958744 & 1.83 & 0.381952\\
-		MDG-b\_30\_n2000\_m200 & 11108647.770283 & 1.66 & 0.381864\\
-		MDG-c\_1\_n3000\_m300 & 24518332 & 1.47 & 1.087397\\
-		MDG-c\_2\_n3000\_m300 & 24539459 & 1.47 & 1.088532\\
-		MDG-c\_8\_n3000\_m400 & 42966259 & 1.08 & 1.346259\\
-		MDG-c\_9\_n3000\_m400 & 42961477 & 1.1 & 1.343878\\
-		MDG-c\_10\_n3000\_m400 & 42931845 & 1.25 & 1.340798\\
-		MDG-c\_13\_n3000\_m500 & 66388188 & 0.93 & 1.545965\\
-		MDG-c\_14\_n3000\_m500 & 66365061 & 0.92 & 1.549764\\
-		MDG-c\_15\_n3000\_m500 & 66443388 & 0.82 & 1.548566\\
-		MDG-c\_19\_n3000\_m600 & 94850218 & 0.82 & 1.725036\\
-		MDG-c\_20\_n3000\_m600 & 94801190 & 0.88 & 1.74827\\
+		MDG-a\_1\_n500\_m50 & 7652.61 & 2.31 & 0.016814\\
+		MDG-a\_2\_n500\_m50 & 7594.54 & 2.28 & 0.017536\\
+		MDG-a\_3\_n500\_m50 & 7609.11 & 1.94 & 0.017072\\
+		MDG-a\_4\_n500\_m50 & 7595.04 & 2.25 & 0.016683\\
+		MDG-a\_5\_n500\_m50 & 7569.35 & 2.4 & 0.016891\\
+		MDG-a\_6\_n500\_m50 & 7640.05 & 1.72 & 0.01682\\
+		MDG-a\_7\_n500\_m50 & 7627.97 & 1.85 & 0.01699\\
+		MDG-a\_8\_n500\_m50 & 7626.51 & 1.6 & 0.016762\\
+		MDG-a\_9\_n500\_m50 & 7644.04 & 1.62 & 0.016843\\
+		MDG-a\_10\_n500\_m50 & 7607.76 & 2.22 & 0.016775\\
+		MDG-b\_21\_n2000\_m200 & 10992646.684172 & 2.72 & 0.188707\\
+		MDG-b\_22\_n2000\_m200 & 11008491.957505 & 2.47 & 0.206581\\
+		MDG-b\_23\_n2000\_m200 & 10996482.095115 & 2.69 & 0.202149\\
+		MDG-b\_24\_n2000\_m200 & 10985954.662907 & 2.7 & 0.199789\\
+		MDG-b\_25\_n2000\_m200 & 11048174.607814 & 2.19 & 0.192322\\
+		MDG-b\_26\_n2000\_m200 & 11018675.18979 & 2.42 & 0.191056\\
+		MDG-b\_27\_n2000\_m200 & 11012434.128481 & 2.59 & 0.180776\\
+		MDG-b\_28\_n2000\_m200 & 10983708.101072 & 2.63 & 0.180872\\
+		MDG-b\_29\_n2000\_m200 & 10990956.494922 & 2.71 & 0.181083\\
+		MDG-b\_30\_n2000\_m200 & 11004898.284888 & 2.58 & 0.181337\\
+		MDG-c\_1\_n3000\_m300 & 24240331 & 2.59 & 0.338768\\
+		MDG-c\_2\_n3000\_m300 & 24268957 & 2.56 & 0.340644\\
+		MDG-c\_8\_n3000\_m400 & 42470830 & 2.22 & 0.419749\\
+		MDG-c\_9\_n3000\_m400 & 42447268 & 2.28 & 0.418926\\
+		MDG-c\_10\_n3000\_m400 & 42462343 & 2.33 & 0.419439\\
+		MDG-c\_13\_n3000\_m500 & 65814180 & 1.79 & 0.493883\\
+		MDG-c\_14\_n3000\_m500 & 65784136 & 1.78 & 0.492989\\
+		MDG-c\_15\_n3000\_m500 & 65787442 & 1.8 & 0.493035\\
+		MDG-c\_19\_n3000\_m600 & 94068914 & 1.64 & 0.556569\\
+		MDG-c\_20\_n3000\_m600 & 94005467 & 1.71 & 0.555894\\
 		\hline
 	\end{tabular}
 	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo que combina
@@ -1136,7 +1136,7 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		1.62 & 0.62 \\
+		2.22 & 0.22 \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -1150,36 +1150,36 @@ Media de los estadísticos:
 	\begin{tabular}{|cccc|}
 		\hline
 		Caso & Coste obtenido & Desv & Tiempo (s)\\ \hline
-		MDG-a\_1\_n500\_m50 & 7560.83 & 3.48 & 0.01891\\
-		MDG-a\_2\_n500\_m50 & 7563.4 & 2.68 & 0.018826\\
-		MDG-a\_3\_n500\_m50 & 7460.16 & 3.86 & 0.019232\\
-		MDG-a\_4\_n500\_m50 & 7451.87 & 4.1 & 0.01887\\
-		MDG-a\_5\_n500\_m50 & 7436.75 & 4.11 & 0.019018\\
-		MDG-a\_6\_n500\_m50 & 7518.25 & 3.29 & 0.018643\\
-		MDG-a\_7\_n500\_m50 & 7502.04 & 3.47 & 0.018787\\
-		MDG-a\_8\_n500\_m50 & 7495.04 & 3.3 & 0.018996\\
-		MDG-a\_9\_n500\_m50 & 7554.54 & 2.77 & 0.018889\\
-		MDG-a\_10\_n500\_m50 & 7462.38 & 4.09 & 0.0205\\
-		MDG-b\_21\_n2000\_m200 & 10057595.617523 & 10.99 & 0.192389\\
-		MDG-b\_22\_n2000\_m200 & 10063542.205813 & 10.84 & 0.192122\\
-		MDG-b\_23\_n2000\_m200 & 9993237.92958 & 11.56 & 0.192491\\
-		MDG-b\_24\_n2000\_m200 & 10021100.549492 & 11.25 & 0.192892\\
-		MDG-b\_25\_n2000\_m200 & 10025313.148476 & 11.25 & 0.192684\\
-		MDG-b\_26\_n2000\_m200 & 10051312.29967 & 10.99 & 0.193354\\
-		MDG-b\_27\_n2000\_m200 & 10051140.804994 & 11.1 & 0.192243\\
-		MDG-b\_28\_n2000\_m200 & 10025336.809131 & 11.12 & 0.193467\\
-		MDG-b\_29\_n2000\_m200 & 10047516.382319 & 11.06 & 0.192314\\
-		MDG-b\_30\_n2000\_m200 & 9971925.528861 & 11.72 & 0.19205\\
-		MDG-c\_1\_n3000\_m300 & 22502085 & 9.57 & 0.405454\\
-		MDG-c\_2\_n3000\_m300 & 22535949 & 9.51 & 0.407438\\
-		MDG-c\_8\_n3000\_m400 & 40024366 & 7.86 & 0.499524\\
-		MDG-c\_9\_n3000\_m400 & 40134952 & 7.6 & 0.497438\\
-		MDG-c\_10\_n3000\_m400 & 40082879 & 7.81 & 0.5004\\
-		MDG-c\_13\_n3000\_m500 & 62482702 & 6.76 & 0.576292\\
-		MDG-c\_14\_n3000\_m500 & 62517590 & 6.66 & 0.571553\\
-		MDG-c\_15\_n3000\_m500 & 62559375 & 6.62 & 0.570204\\
-		MDG-c\_19\_n3000\_m600 & 90059376 & 5.83 & 0.63464\\
-		MDG-c\_20\_n3000\_m600 & 89993465 & 5.91 & 0.633904\\
+		MDG-a\_1\_n500\_m50 & 7474.38 & 4.59 & 0.017719\\
+		MDG-a\_2\_n500\_m50 & 7537.89 & 3.01 & 0.018131\\
+		MDG-a\_3\_n500\_m50 & 7601.81 & 2.03 & 0.018016\\
+		MDG-a\_4\_n500\_m50 & 7496.65 & 3.52 & 0.017907\\
+		MDG-a\_5\_n500\_m50 & 7431.26 & 4.18 & 0.017561\\
+		MDG-a\_6\_n500\_m50 & 7483.94 & 3.73 & 0.017804\\
+		MDG-a\_7\_n500\_m50 & 7496.57 & 3.54 & 0.017584\\
+		MDG-a\_8\_n500\_m50 & 7428.75 & 4.16 & 0.017891\\
+		MDG-a\_9\_n500\_m50 & 7530.62 & 3.08 & 0.017802\\
+		MDG-a\_10\_n500\_m50 & 7456.57 & 4.16 & 0.017702\\
+		MDG-b\_21\_n2000\_m200 & 9994222.157153 & 11.55 & 0.191713\\
+		MDG-b\_22\_n2000\_m200 & 10033091.17797 & 11.11 & 0.191718\\
+		MDG-b\_23\_n2000\_m200 & 10041223.567397 & 11.14 & 0.192542\\
+		MDG-b\_24\_n2000\_m200 & 10057730.835612 & 10.92 & 0.191871\\
+		MDG-b\_25\_n2000\_m200 & 10019795.646517 & 11.3 & 0.19117\\
+		MDG-b\_26\_n2000\_m200 & 10031887.18948 & 11.16 & 0.191544\\
+		MDG-b\_27\_n2000\_m200 & 10002840.849524 & 11.52 & 0.192185\\
+		MDG-b\_28\_n2000\_m200 & 10010890.500721 & 11.25 & 0.192017\\
+		MDG-b\_29\_n2000\_m200 & 10020460.625419 & 11.3 & 0.191838\\
+		MDG-b\_30\_n2000\_m200 & 10053473.228581 & 11 & 0.192301\\
+		MDG-c\_1\_n3000\_m300 & 22497229 & 9.59 & 0.342223\\
+		MDG-c\_2\_n3000\_m300 & 22532631 & 9.53 & 0.341658\\
+		MDG-c\_8\_n3000\_m400 & 40092046 & 7.7 & 0.413923\\
+		MDG-c\_9\_n3000\_m400 & 40007507 & 7.9 & 0.414732\\
+		MDG-c\_10\_n3000\_m400 & 39990708 & 8.02 & 0.415063\\
+		MDG-c\_13\_n3000\_m500 & 62502969 & 6.73 & 0.475655\\
+		MDG-c\_14\_n3000\_m500 & 62494055 & 6.7 & 0.475688\\
+		MDG-c\_15\_n3000\_m500 & 62618559 & 6.53 & 0.475423\\
+		MDG-c\_19\_n3000\_m600 & 90158069 & 5.73 & 0.528877\\
+		MDG-c\_20\_n3000\_m600 & 90088585 & 5.81 & 0.529462\\
 		\hline
 	\end{tabular}
 	\caption{Evaluación de las soluciones y estadísticos \emph{Desv} y \emph{Tiempo} obtenidos por el algoritmo que combina
@@ -1193,7 +1193,7 @@ Media de los estadísticos:
 	\begin{tabular}{|cc|}
 		\hline
 		Desv & Tiempo (s)\\ \hline
-		7.37 & 0.25 \\
+		7.42 & 0.22 \\
 		\hline
 	\end{tabular}
 \end{table}
@@ -1210,12 +1210,12 @@ de búsqueda local (con primer mejor) y greedy de la primera práctica.
 		Algoritmo & Desv & Tiempo (s)\\ \hline
 		Greedy & 1.63 & 1.19 \\
 		BL & 1.3 & 0.69 \\
-		ES-CM & 1.41 & 0.25 \\
-		ES-prop & 5.96 & 0.24 \\
+		ES-CM & 1.42 & 0.21 \\
+		ES-prop & 6 & 0.23 \\
 		BMB & 0.99 & 2.55 \\
 		ILS & 0.69 & 1.02 \\
-		ILS-ES-CM & 1.62 & 0.62 \\
-		ILS-ES-prop & 7.37 & 0.25 \\
+		ILS-ES-CM & 2.22 & 0.22 \\
+		ILS-ES-prop & 7.42 & 0.22 \\
 		\hline
 	\end{tabular}
 	\caption{Comparativa de los estadísticos medios obtenidos por los distintos algoritmos.}
@@ -1257,9 +1257,8 @@ En la hibridación de ES con ILS, el número de iteraciones es menor en cada eje
 se adapta enfriando aún más rápido mientras que tenemos dificultades para ajustar el parámetro $\alpha=0.5$, con el que ocurre
 lo mismo que en el caso anterior, esta vez incluso con resultados peores en los ejemplos del grupo MDG-a (Tablas \ref{tab:ils-es} y \ref{tab:ils-es-proporcional}).
 
-En tiempo no hay mucha diferencia en la ejecución, pero sí que la hay en la inicialización de los parámetros (el esquema
-proporcional no requiere inicializar $M$, $T_f$ y $beta$), esto se aprecia al combinarlo con ILS, ya que la inicialización
-se realiza 10 veces y el esquema proporcional saca una ventaja de tiempo, que por supuesto no compensa su alta desviación.
+En tiempo no hay mucha diferencia entre ambos esquemas de enfriamiento, ambos son de los más rápidos,en la ejecución. Por tanto
+concluimos que el esquema de Cauchy Modificado es más adecuado.
 
 Este experimento nos ha servido para apreciar la facilidad de adaptación del esquema de Cauchy modificado a la hora de enfriar.
 A partir de ahora, siempre consideraremos este esquema. Ignoraremos los algoritmos ES-prop y ILS-ES-prop por el resto del
@@ -1279,10 +1278,7 @@ que quizá deberíamos haber permitido a ES realizar más iteraciones para que e
 
 La cosa cambia cuando los consideramos en combinación con ILS: Tablas \ref{tab:ils} y \ref{tab:ils-es}.
 
-A pesar de que ES sigue siendo ligeramente más rápido, esta diferencia se nota menos en este caso. Probablemente es debido
-a que la inicialización de ES es más lenta, y aquí se tiene que inicializar 10 veces en lugar de 1.
-
-Además, aquí si hay una gran mejora de la Búsqueda Local. El ES permite que la solución empeore en sus primeras etapas, y el
+A pesar de que ES sigue siendo más rápido, aquí si hay una gran mejora de la Búsqueda Local. El ES permite que la solución empeore en sus primeras etapas, y el
 número de iteraciones en cada ejecución es demasiado bajo. Aunque el esquema de Cauchy Modificado permite que se adapte para
 enfriar más rápido ante un menor número de iteraciones, no tiene suficientes iteraciones para que la fase de explotación
 (cuando la temperatura es muy baja) dé sus frutos.
@@ -1294,7 +1290,8 @@ comparación no sea justa del todo, ya que una iteración de LS es bastante más
 
 Como hemos comentado antes, todos los algoritmos estudiados en esta práctica son relativamente rápidos. Sin embargo
 (ignorando el Greedy, que no es de trayectoria), los algoritmos basados en trayectorias múltiples son algo más lentos
-que los basados en trayectorias múltiples: ILS-ES-CM es más lento que ES-CM y ILS y BMB son más lentos que BL. Esto
+que los basados en trayectorias múltiples cuando se usa la búsqueda local: ILS y BMB son más lentos que BL, no hay mucha
+diferencia cuando se usa enfriamiento simulado (entre ES-CM e ILS-ES-CM). Esto
 se debe a que necesitan inicializar la búsqueda 10 veces en lugar de sólo 1, y generar una solución aleatoria lleva tiempo.
 
 En cuanto a fitness, los algoritmos de trayectoria múltiple (exceptuando a ILS-ES, hemos comentado anteriormente la razón

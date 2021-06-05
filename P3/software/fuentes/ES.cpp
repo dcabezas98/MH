@@ -140,7 +140,7 @@ void es(vector<vector<double> > &mat) {
     //cout << T << ", ";
     exitos=0;
     vecinos=0;
-    while(vecinos<max_vecinos && exitos<max_exitos){
+    while(vecinos<max_vecinos && exitos<max_exitos && EVALS<LIMIT){
       sol.mutate(index_out, elem_in, delta, mat);
       vecinos++;
       if(delta>0 || randF() <= exp(delta/T)){
