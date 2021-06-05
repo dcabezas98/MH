@@ -84,8 +84,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
         modify[i] = u(gen);
         mom1[i]= mom[i]+modify[i];
         mom2[i]= mom[i]-modify[i];
-        child1[i]=sol[i]+cel*mom1[i];
-        child2[i]=sol[i]+cel*mom2[i];
+        child1[i]=sol[i]+(cel+IMPULSE*(1-cel))*mom1[i];
+        child2[i]=sol[i]+(cel+IMPULSE*(1-cel))*mom2[i];
       }
       clip(child1);
       clip(child2);
@@ -99,7 +99,7 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
       bool carryon = true;
       for (int j = 0; carryon && evals>0 && j < IMPROVE_LIMIT*dim; j++){
         for (int i = 0; i < dim; i++) { // Generar vecino aleatorio
-          modify[i] = u(gen);
+          modify[i] = sqrt(cel)*u(gen);
           neighbor[i]= sol[i]+modify[i];
         }
         neighbor_fitness=cec17_fitness(&neighbor[0]);
@@ -133,8 +133,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 int main() { 
   std::uniform_real_distribution<> range(-100.0, 100.0);
 
-  //int dim = 30;
-  for(int dim=10; dim<=30; dim+=20) {
+  int dim = 10;
+  //for(int dim=10; dim<=30; dim+=20) {
     //int seed = 42;
     for (int seed=42; seed<=87; seed+=5){
       //int funcid = 4;
@@ -170,6 +170,6 @@ int main() {
         }
       }
     }
-  }
+  //}
 
 }
