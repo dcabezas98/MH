@@ -63,7 +63,7 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 
   double fitness = cec17_fitness(&sol[0]);
   evals--;
-  if (fitness < best) best=fitness;
+  best=min(best, neighbor_fitness);
 
   while(evals>0){
     dif = fitness-best;
@@ -84,8 +84,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
         modify[i] = u(gen);
         mom1[i]= mom[i]+modify[i];
         mom2[i]= mom[i]-modify[i];
-        child1[i]=sol[i]+(cel+IMPULSE*(1-cel))*mom1[i];
-        child2[i]=sol[i]+(cel+IMPULSE*(1-cel))*mom2[i];
+        child1[i]=sol[i]+(cel+IMPULSE*(INIT_CELERITY-cel))*mom1[i];
+        child2[i]=sol[i]+(cel+IMPULSE*(INIT_CELERITY-cel))*mom2[i];
       }
       clip(child1);
       clip(child2);
@@ -102,10 +102,13 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
           modify[i] = sqrt(cel)*u(gen);
           neighbor[i]= sol[i]+modify[i];
         }
+        clip(neighbor);
         neighbor_fitness=cec17_fitness(&neighbor[0]);
         evals--;
-        if(neighbor_fitness<fitness)
+        if(neighbor_fitness<fitness){
           carryon=false;
+          best=min(best, neighbor_fitness);
+        }
       }
       if (!carryon){ // Se encontró un vecino mejor
         improvement=fitness-neighbor_fitness;
@@ -114,13 +117,13 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
         for (int i = 0; i < dim; i++)  // Actualizar momento
           mom[i]=(1-weight_neighbor)*mom[i]+weight_neighbor*modify[i];
         
-        for (int i = 0; i < dim; i++){ // Actualizar solución
+        for (int i = 0; i < dim; i++) // Actualizar solución
           sol[i]=sol[i]+cel*mom[i];
-        }
+        
         clip(sol);
         fitness=fitness = cec17_fitness(&sol[0]);
         evals--;
-        if (fitness < best) best=fitness;
+        best=min(best, fitness);
 
         cel = DECREASE_SUCCESS*cel;
       }
@@ -133,8 +136,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 int main() { 
   std::uniform_real_distribution<> range(-100.0, 100.0);
 
-  int dim = 10;
-  //for(int dim=10; dim<=30; dim+=20) {
+  //int dim = 10;
+  for(int dim=10; dim<=30; dim+=20) {
     //int seed = 42;
     for (int seed=42; seed<=87; seed+=5){
       //int funcid = 4;
@@ -170,6 +173,6 @@ int main() {
         }
       }
     }
-  //}
+  }
 
 }
