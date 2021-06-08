@@ -254,6 +254,8 @@ Cada ejecución parte de una solución aleatoria con momento aleatorio y un impu
 	\label{alg:main}
 \end{algorithm}
 
+\newpage
+
 \section{Implementación y benchmark}
 
 \subsection{Detalles de implementación}
@@ -290,6 +292,150 @@ parámetros, su papel en la metaheurística y el valor concreto que les damos en
 \end{table}
 
 Basamos estas elecciones únicamente en nuestra intuición y en el comportamiento del algoritmo (número de veces
-que hace cada acción y en qué orden, y valores de las variables, no en los resultados) sobre la función 4 del benchmark en dimensión 10. De modo que seguramente habrá mejores valores para estos parámetros.
+que hace cada acción y en qué orden, y valores de las variables, no en los resultados) sobre la función con $\text{ID}=4$ del benchmark en dimensión 10. De modo que seguramente habrá mejores valores para estos parámetros.
+
+\subsection{Resultados del benchmark}
+
+Ejecutamos nuestra metaheurística sobre el benchmark en dimensiones 10 y 30. Compararemos los resultados obtenidos con los de
+los algoritmos recomendados como referencias: DE, PSO, AEO y SSA. Esto lo conseguimos fácilmente gracias a la herramienta
+\href{https://tacolab.org/}{TACO}. Nuestro algoritmo aparecerá con el nombre de BRANCH.
+
+En las siguientes tablas mostramos los resultados obtenidos en el benchmark para cada algoritmo se calcula el error medio (respecto al
+mínimo) de varias ejecuciones con distintas semillas. Para nuestro algoritmo hacemos 10 ejecuciones, las 10 semillas que usamos son
+los números 42, 47, \ldots, 87, saltando de 5 en 5. En las tablas marcamos en rojo los resultados de los algoritmos de referencia
+que son superados por el nuestro, y en azul los resultados de nuestro algoritmo que superan a almenos uno de los otros.
+
+
+\subsubsection*{Resultados en dimensión 10}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|lllll|}
+		\hline
+		{} &        AEO &     BRANCH &         DE &        PSO &        SSA \\
+		\hline
+		F01  &  5.134e+06 &  7.229e+09 &  0.000e+00 &  5.255e+07 &  3.766e+03 \\
+		F02  &  1.000e+00 &  1.254e+12 &  0.000e+00 &  1.000e+00 &  1.000e+00 \\
+		F03  &  3.575e+02 &  1.493e+04 &  0.000e+00 &  1.989e+03 &  1.000e-10 \\
+		F04  &  1.414e+01 &  7.058e+02 &  1.105e-04 &  4.684e+01 &  4.172e+00 \\
+		F05  &  3.876e+01 &  \textcolor{blue}{6.928e+01} &  \textcolor{red}{1.151e+02} &  3.212e+01 &  4.840e+01 \\
+		F06  &  2.617e+01 &  6.047e+01 &  3.460e+01 &  1.001e+01 &  2.632e+01 \\
+		F07  &  6.753e+01 &  4.108e+02 &  3.848e+01 &  4.275e+01 &  6.198e+01 \\
+		F08  &  2.808e+01 &  6.439e+01 &  2.983e+01 &  2.203e+01 &  3.849e+01 \\
+		F09  &  2.207e+02 &  1.267e+03 &  1.938e+02 &  5.686e+01 &  2.439e+02 \\
+		F10  &  \textcolor{red}{1.172e+03} &  \textcolor{blue}{1.073e+03} &  3.597e+02 &  \textcolor{red}{1.077e+03} &  \textcolor{red}{1.086e+03} \\
+		F11  &  9.704e+01 &  7.980e+02 &  1.942e-02 &  3.843e+01 &  9.529e+01 \\
+		F12  &  2.525e+05 &  8.224e+07 &  4.931e+00 &  2.517e+06 &  2.313e+04 \\
+		F13  &  7.788e+02 &  \textcolor{blue}{5.489e+03} &  5.988e+00 &  \textcolor{red}{8.409e+03} &  \textcolor{red}{8.101e+03} \\
+		F14  &  7.452e+01 &  1.882e+02 &  5.240e-02 &  9.993e+01 &  1.181e+02 \\
+		F15  &  2.045e+02 &  3.979e+03 &  6.060e-02 &  2.066e+03 &  5.244e+02 \\
+		F16  &  1.804e+02 &  \textcolor{blue}{4.391e+02} &  \textcolor{red}{4.561e+02} &  1.415e+02 &  1.884e+02 \\
+		F17  &  8.969e+01 &  1.392e+02 &  2.350e+01 &  6.497e+01 &  9.769e+01 \\
+		F18  &  1.926e+03 &  \textcolor{blue}{4.558e+03} &  3.630e-02 &  \textcolor{red}{1.484e+04} &  \textcolor{red}{1.360e+04} \\
+		F19  &  6.418e+01 &  3.723e+03 &  5.192e-03 &  3.220e+03 &  1.246e+02 \\
+		F20  &  1.284e+02 &  \textcolor{blue}{2.083e+02} &  \textcolor{red}{3.837e+02} &  8.444e+01 &  1.058e+02 \\
+		F21  &  1.769e+02 &  2.641e+02 &  1.889e+02 &  1.320e+02 &  1.044e+02 \\
+		F22  &  1.148e+02 &  1.182e+03 &  1.005e+02 &  7.740e+01 &  1.091e+02 \\
+		F23  &  3.428e+02 &  \textcolor{blue}{4.512e+02} &  \textcolor{red}{8.098e+02} &  3.304e+02 &  3.487e+02 \\
+		F24  &  3.460e+02 &  4.297e+02 &  1.000e+02 &  1.810e+02 &  2.597e+02 \\
+		F25  &  4.348e+02 &  8.055e+02 &  4.040e+02 &  4.478e+02 &  4.380e+02 \\
+		F26  &  5.047e+02 &  1.397e+03 &  2.706e+02 &  3.729e+02 &  3.904e+02 \\
+		F27  &  4.197e+02 &  5.203e+02 &  3.897e+02 &  4.134e+02 &  4.117e+02 \\
+		F28  &  5.469e+02 &  8.027e+02 &  3.517e+02 &  4.698e+02 &  4.318e+02 \\
+		F29  &  3.752e+02 &  4.729e+02 &  2.375e+02 &  3.193e+02 &  3.676e+02 \\
+		F30  &  2.471e+06 &  5.310e+06 &  8.051e+04 &  6.352e+05 &  1.469e+06 \\\hline
+		Best &          0 &          0 &         21 &          8 &          1 \\
+		\hline
+	\end{tabular}
+	\caption{Resultados de nuestra metaheurística comparados con los de otras metaheurísticas de referencia. Benchmark CEC'2017, dimensión 10.}
+	\label{tab:branch-10}
+\end{table}
+
+\subsubsection*{Resultados en dimensión 30}
+
+\begin{table}[H]
+	\centering
+	\begin{tabular}{|l|lllll|}
+		\hline
+		{} &        AEO &     BRANCH &         DE &        PSO &        SSA \\
+		\hline
+		F01  &  1.782e+08 &  8.644e+10 &  4.909e+04 &  4.175e+09 &  3.765e+03 \\
+		F02  &  1.000e+00 &  1.238e+46 &  1.309e+19 &  1.000e+00 &  1.000e+00 \\
+		F03  &  2.989e+04 &  1.284e+05 &  3.481e+03 &  5.453e+04 &  2.416e-05 \\
+		F04  &  2.018e+02 &  2.271e+04 &  8.430e+01 &  1.183e+03 &  8.388e+01 \\
+		F05  &  2.496e+02 &  4.455e+02 &  2.015e+02 &  2.170e+02 &  2.649e+02 \\
+		F06  &  6.894e+01 &  7.838e+01 &  6.320e+00 &  3.694e+01 &  6.384e+01 \\
+		F07  &  5.291e+02 &  2.522e+03 &  2.334e+02 &  3.596e+02 &  4.609e+02 \\
+		F08  &  1.894e+02 &  3.226e+02 &  1.894e+02 &  1.745e+02 &  2.205e+02 \\
+		F09  &  5.919e+03 &  1.073e+04 &  6.530e+01 &  2.842e+03 &  6.212e+03 \\
+		F10  &  \textcolor{red}{6.042e+03} &  \textcolor{blue}{4.106e+03} &  3.764e+03 &  \textcolor{red}{6.938e+03} &  \textcolor{red}{4.844e+03} \\
+		F11  &  3.980e+02 &  9.516e+03 &  7.958e+01 &  1.207e+03 &  1.537e+02 \\
+		F12  &  8.585e+07 &  1.129e+10 &  3.258e+05 &  3.586e+08 &  2.528e+06 \\
+		F13  &  1.880e+06 &  5.992e+09 &  1.536e+02 &  4.508e+07 &  1.926e+05 \\
+		F14  &  1.797e+04 &  \textcolor{blue}{2.262e+05} &  7.100e+01 &  \textcolor{red}{3.059e+05} &  3.286e+03 \\
+		F15  &  6.164e+04 &  4.986e+08 &  6.256e+01 &  2.737e+05 &  8.852e+04 \\
+		F16  &  2.008e+03 &  2.208e+03 &  1.319e+03 &  1.568e+03 &  1.658e+03 \\
+		F17  &  8.224e+02 &  1.115e+03 &  4.809e+02 &  4.725e+02 &  8.471e+02 \\
+		F18  &  3.110e+05 &  5.123e+06 &  6.122e+01 &  2.170e+06 &  8.855e+04 \\
+		F19  &  1.888e+06 &  1.196e+09 &  3.572e+01 &  1.260e+06 &  1.510e+05 \\
+		F20  &  7.208e+02 &  8.443e+02 &  2.751e+02 &  4.621e+02 &  6.450e+02 \\
+		F21  &  4.478e+02 &  5.517e+02 &  3.255e+02 &  4.113e+02 &  4.502e+02 \\
+		F22  &  1.987e+03 &  4.869e+03 &  1.002e+02 &  1.027e+03 &  4.196e+03 \\
+		F23  &  8.410e+02 &  1.325e+03 &  5.346e+02 &  6.404e+02 &  8.365e+02 \\
+		F24  &  8.788e+02 &  1.201e+03 &  6.059e+02 &  7.095e+02 &  9.264e+02 \\
+		F25  &  5.055e+02 &  6.959e+03 &  3.870e+02 &  6.864e+02 &  4.176e+02 \\
+		F26  &  4.529e+03 &  8.579e+03 &  4.038e+02 &  3.369e+03 &  5.522e+03 \\
+		F27  &  8.127e+02 &  1.761e+03 &  4.925e+02 &  8.068e+02 &  6.550e+02 \\
+		F28  &  5.547e+02 &  5.328e+03 &  3.943e+02 &  1.105e+03 &  4.896e+02 \\
+		F29  &  2.088e+03 &  2.659e+03 &  1.025e+03 &  1.409e+03 &  1.934e+03 \\
+		F30  &  9.839e+06 &  5.358e+08 &  3.657e+03 &  1.359e+07 &  2.308e+06 \\\hline
+		Best &          0 &          0 &         24 &          2 &          3 \\
+		\hline
+	\end{tabular}
+	\caption{Resultados de nuestra metaheurística comparados con los de otras metaheurísticas de referencia. Benchmark CEC'2017, dimensión 30.}
+	\label{tab:branch-30}
+\end{table}
+
+\subsection{Análisis de los resultados}
+
+Lo primero que observamos claramente en ambas tablas es que nuestro algoritmo es el peor con diferencia, sólo consigue superar a
+cada uno de los algoritmos de referencia en 3 ó 4 funciones como mucho, y no es el mejor en ninguna función. 
+
+El desempeño es algo
+mejor en dimensión 10 (Tabla \ref{tab:branch-10}), que en dimensión 30 (Tabla \ref{tab:branch-30}) donde supera a muy pocos valores.
+Esto podría deberse a que hemos ajustado los parámetros basándonos en un ejemplo de dimensión 10.
+
+Parece que nuestra metaheurística ha obtenido resultados decentes en la función F10, donde supera en ambas dimensiones a todos los
+algoritmos de referencia salvo a DE. En dimensión 10, supera a PSO y SSA también en las funciones F13 y F18, y en 4 funciones a DE.
+Luego tampoco podemos considerar nuestra metaheurística como mala del todo, ya que consigue superar a algoritmos competitivos en
+algunos ejemplos.
+
+Además, debemos tener en cuenta que hemos realizado pocos experimentos para perfilar nuestra idea, y que darle una forma concreta
+que funcione correctamente es una tarea muy complicada, debido a la cantidad de decisiones que tomamos y la cantidad de parámetros que
+hay que seleccionar.
+
+Por tanto, para ser una primera aproximación los resultados son medianamente satisfactorios, y no podemos descartar que la idea tenga
+potencial.
+
+A nivel teórico, utilizar momentos para que las soluciones se desplacen por el espacio tiene una clara desventaja: requiere
+el más evaluaciones que otro tipo de trayectorias como la Búsqueda Local o el Enfriamiento simulado, ya que los vecinos que evaluamos
+y solución a la que saltamos realmente son diferentes. Sin embargo, es normal que para cada salto se realicen un gran número de
+evaluaciones, sobre todo a partir de cierto número de saltos, cuando la calidad de la solución es medianamente decente y cuesta encontrar
+un vecino que mejore a la solución, de modo que una evaluación extra no supone mucha diferencia en estas etapas del algoritmo, sí que 
+la puede suponer en las primeras etapas, cuando encontrar un vecino mejor es relativamente sencillo. Por otra parte, el uso de momentos
+puede ayudar a que la solución no quede atrapada en máximos locales.
+
+Como hemos comentado, aun se puede mejorar mucho esta metaheurística, a continuación probaremos a combinarla con la Búsqueda Local.
+
+\section{Hibridación con Búsqueda Local}
+
+
+
+\section{Conclusiones y posibles mejoras}
+
+TODO
+
+En lugar de partir de un momento aleatorio, construir el vector momento a partir de algunas iteraciones de Búsqueda Local. Esto evita
+el mayor consumo de evaluaciones extra en las primeras etapas que comentamos previamente. 
 
 \end{document}
