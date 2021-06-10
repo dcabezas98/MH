@@ -63,7 +63,7 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 
   double fitness = cec17_fitness(&sol[0]);
   evals--;
-  best=min(best, neighbor_fitness);
+  best=min(best, fitness);
 
   while(evals>0){
     dif = fitness-best;
@@ -150,7 +150,7 @@ int main() {
         cec17_init("branch", funcid, dim);
         spare_evals=dim*10000;
 
-        best=MAXFLOAT;
+        best=__DBL_MAX__;
 
         //cerr <<"Warning: output by console, if you want to create the output file you have to comment cec17_print_output()" <<endl;
         //cec17_print_output(); // Comment to generate the output file
