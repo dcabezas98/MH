@@ -662,7 +662,29 @@ nuestra metaheurística se beneficia enormemente al añadir una componente puram
 
 \pagebreak
 
-\section{Conclusiones y posibles mejoras}
+\section{Intentos de mejora}
+
+Antes de nada, deberíamos estudiar el equilibrio entre diversidad y convergencia. Nuestra metaheurística lanza multiples trayectorias
+que se dividen, por lo que medir la diversidad no es tan sencillo como en un algoritmo genético. Sin embargo, sí que podemos medir
+la convergencia sin mucho esfuerzo. Representaremos en gráficas el error de la mejor solución encontrada hasta el momento
+en función de las evaluaciones consumidas. Si las gráficas llegan al mínimo demasiado rápido, significa que el algoritmo
+encuentra su mejor solución demasiado rápido y merecería la pena aumentar la diversificación y tardar algunas iteraciones
+más a cambio de que el mínimo encontrado sea mejor. En cada gráfica representamos la evolución de las soluciones de 4 intentos
+con las semillas (42, 47, 52 y 57).
+
+TODO: gráficas
+
+
+
+
+TODO: ajustar parámetros y funciones, por ejemplo el x -> x(1+x) puede acercarse demasiado a 1
+
+En lugar de partir de un momento aleatorio, construir el vector momento a partir de algunas iteraciones de Búsqueda Local. Esto evita
+el mayor consumo de evaluaciones extra en las primeras etapas que comentamos previamente. 
+
+\section{Conclusiones}
+
+\subsection{Valoración de la meteheurística}
 
 \subsection{Mi experiencia diseñando una metaheurística}
 
@@ -670,7 +692,7 @@ Lo que más me ha llamado la atención durante todo el trabajo es la dificultad 
 
 Con relativa facilidad, pensé una idea simple pero interesante, insperada en un fenómeno físico como es la conservación del momento.
 
-Sin embargo, durante el diseño de la metaheurística concreta he tenido que afrontar bastantes decisiones: ``¿Cuándo una solución es prometedora?'', ``¿Cuando merece la pena ramificar una solución?'', etc. La verdad es que me parece muy divertido e interesante pensar
+Sin embargo, durante el diseño de la metaheurística concreta he tenido que afrontar bastantes decisiones: ``¿Cuándo una solución es prometedora?'', ``¿Cuando merece la pena ramificar una solución?'', ``¿Cómo aumento la diversificación?'', etc. La verdad es que me parece muy divertido e interesante pensar
  funciones que intenten cuantificar estas propiedades tan complejas, empiezo con ``Necesito que sea creciente con la fitness, decreciente
  con el número de evaluaciones, \ldots'', pero es muy difícil encontrar buenos equilibrios.
 
@@ -679,12 +701,5 @@ valores tenía que decidir (todos los de la Tabla \ref{tab:parametros} y los dos
 
 En resumen, me he dado cuenta que no basta con tener una buena idea general, sino que hay que saber dar forma matemática a la intución,
 algo que he sufrido y disfrutado.
-
-\subsection{Posibles mejoras para la metaheurística}
-
-TODO: ajustar parámetros y funciones, por ejemplo el x -> x(1+x) puede acercarse demasiado a 1
-
-En lugar de partir de un momento aleatorio, construir el vector momento a partir de algunas iteraciones de Búsqueda Local. Esto evita
-el mayor consumo de evaluaciones extra en las primeras etapas que comentamos previamente. 
 
 \end{document}
