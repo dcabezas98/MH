@@ -662,9 +662,11 @@ nuestra metaheurística se beneficia enormemente al añadir una componente puram
 
 \pagebreak
 
-\section{Intentos de mejora}
+\section{Intento de mejora}
 
-Antes de nada, deberíamos estudiar el equilibrio entre diversidad y convergencia. Nuestra metaheurística lanza multiples trayectorias
+\subsection{Estudio de convergencia}
+
+Antes de nada, deberíamos estudiar el equilibrio entre diversidad y convergencia de nuestro algoritmo. Nuestra metaheurística lanza multiples trayectorias
 que se dividen, por lo que medir la diversidad no es tan sencillo como en un algoritmo genético. Sin embargo, sí que podemos medir
 la convergencia sin mucho esfuerzo. Representaremos en gráficas el error de la mejor solución encontrada hasta el momento
 en función de las evaluaciones consumidas. Si las gráficas llegan al mínimo demasiado rápido, significa que el algoritmo
@@ -672,10 +674,160 @@ encuentra su mejor solución demasiado rápido y merecería la pena aumentar la 
 más a cambio de que el mínimo encontrado sea mejor. En cada gráfica representamos la evolución de las soluciones de 4 intentos
 con las semillas (42, 47, 52 y 57).
 
-TODO: gráficas
+Si el error inicial es muy alto, se distorsiona demasiado la escala del eje y no se aprecian las diferencias al final, modo que acompañaremos
+algunas de las gráficas con versiones reescaladas en las que puede que no se aprecie toda la evolución de las soluciones, pero sí las diferencias de
+error en las últimas etapas de la ejecución.
 
+Debido a la cantidad de gráficas, sólo expondremos el análisis de algunas. A modo de anexo, se adjuntan todas las gráficas generadas.
 
+\subsubsection*{BRANCH. Dimensión 10}
 
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim10/1}}
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim10/scale-1}}
+	\caption{Gráfica de convergencia para F1.}
+	\label{fig:graph-branch-10-f1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Gráfica de convergencia para F6.]{\label{fig:graph-branch-10-f6}\includegraphics[width=75mm]{imgs/branch/dim10/6}}
+	\subfigure[Gráfica de convergencia para F8.]{\label{fig:graph-branch-10-f8}\includegraphics[width=75mm]{imgs/branch/dim10/8}}
+	\caption{}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim10/11}}
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim10/scale-11}}
+	\caption{Gráfica de convergencia para F11.}
+	\label{fig:graph-branch-10-f11}
+\end{figure}
+
+La convergencia prematura que acabamos de comentar aparece en la ejecución azul de F1 (Figura \ref{fig:graph-branch-10-f1}), la roja de F6
+(Figura \ref{fig:graph-branch-10-f6}), la azul de F11 (Figura \ref{fig:graph-branch-10-f11}). En una fracción relativamente pequeña (menor que
+un tercio) de las evaluaciones, el algoritmo alcanza la mejor solución de toda la ejecución. También ocurre en menor medida a la ejecución
+ amarilla de F11 (Figura \ref{fig:graph-branch-10-f11}).
+
+\subsubsection*{BRANCH. Dimensión 30}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim30/1}}
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim10/scale-1}}
+	\caption{Gráfica de convergencia para F1.}
+	\label{fig:graph-branch-30-f1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Gráfica de convergencia para F6.]{\label{fig:graph-branch-30-f6}\includegraphics[width=75mm]{imgs/branch/dim30/6}}
+	\subfigure[Gráfica de convergencia para F8.]{\label{fig:graph-branch-30-f8}\includegraphics[width=75mm]{imgs/branch/dim30/8}}
+	\caption{}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim30/11}}
+	\subfigure{\includegraphics[width=75mm]{imgs/branch/dim30/scale-11}}
+	\caption{Gráfica de convergencia para F11.}
+	\label{fig:graph-branch-30-f11}
+\end{figure}
+
+En dimensión 30 también ocurre convergencia prematura en algunos casos, como la solución azul de F1 (Figura \ref{fig:graph-branch-30-f1}),
+la roja de F8 (Figura \ref{fig:graph-branch-30-f8}) y la roja de F11 (Figura \ref{fig:graph-branch-30-f11}).
+
+ Sin embargo, el comportamiento de las soluciones varía con la semilla y la función a minimizar. Hay muchas ejecuciones
+en las que se necesitan casi todas las evaluaciones para llegar a la mejor solución. Además, muchas de las ejecuciones que alcanzan
+su mejor solución muy rápido superan al resto de ejecuciones.
+
+Al ser un algoritmo que lanza múltiples trayectorias (independientemente de que estas se ramifiquen), es normal que la mejor
+solución se encuentre antes o después dependiendo de la semilla. Por tanto, no podemos concluir que la
+naturaleza de la metaheurística la haga susceptible de converger prematuramente.
+
+\subsubsection*{HYBRID. Dimensión 10}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim10/1}}
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim10/scale-1}}
+	\caption{Gráfica de convergencia para F1.}
+	\label{fig:graph-hybrid-10-f1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Gráfica de convergencia para F6.]{\label{fig:graph-hybrid-10-f6}\includegraphics[width=75mm]{imgs/hybrid/dim10/6}}
+	\subfigure[Gráfica de convergencia para F8.]{\label{fig:graph-hybrid-10-f8}\includegraphics[width=75mm]{imgs/hybrid/dim10/8}}
+	\caption{}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim10/11}}
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim10/scale-11}}
+	\caption{Gráfica de convergencia para F11.}
+	\label{fig:graph-hybrid-10-f11}
+\end{figure}
+
+Al hibridar el algoritmo con Búsqueda Local, hemos comprobado que nuestra metaheurística carecía de un método para ``pulir'' una
+solución una vez que alcanza una bondad determinada. Ahora podemos observar en estas gráficas que las últimas iteraciones son
+cruciales para el algoritmo, el error en las ejecuciones de F1 (Figura \ref{fig:graph-hybrid-10-f1}) y F11
+(Figura \ref{fig:graph-hybrid-10-f11}) estaba decreciendo considerablemente cuando se agotaron las evaluaciones. 
+
+En cambio, en F6 (Figura \ref{fig:graph-hybrid-10-f6}) y F8 (Figura \ref{fig:graph-hybrid-10-f8}), las soluciones no mejoran
+a partir del primer óptimo local encontrado (exceptuando la amarilla en F6).
+
+\subsubsection*{HYBRID. Dimensión 30}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim30/1}}
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim30/scale-1}}
+	\caption{Gráfica de convergencia para F1.}
+	\label{fig:graph-hybrid-30-f1}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure[Gráfica de convergencia para F6.]{\label{fig:graph-hybrid-30-f6}\includegraphics[width=75mm]{imgs/hybrid/dim30/6}}
+	\subfigure[Gráfica de convergencia para F8.]{\label{fig:graph-hybrid-30-f8}\includegraphics[width=75mm]{imgs/hybrid/dim30/8}}
+	\caption{}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim30/11}}
+	\subfigure{\includegraphics[width=75mm]{imgs/hybrid/dim30/scale-11}}
+	\caption{Gráfica de convergencia para F11.}
+	\label{fig:graph-hybrid-30-f11}
+\end{figure}
+
+En este caso, el comportamiento es similar al de dimensión 10. Las diferencias son que la excepción de F6 (amarilla en Figura
+\ref{fig:graph-hybrid-10-f6}) ahora ocurre con la azul de F8 (Figura \ref{fig:graph-hybrid-30-f8}).
+
+\subsection{Cambios}
+
+Realizaremos cambios para intentar mejorar el desempeño del algoritmo híbrido, que es la versión
+que mejor ha funcionado de las dos.
+
+En base a lo observado en las gráficas de convergencia, parece que invertir más iteraciones
+en la Búsqueda Local podría mejorar los resultados del algoritmo, las razones de nuestras sospechas
+son las siguientes.
+
+\begin{enumerate}
+	\item No existe un problema de convergencia prematura generalizado, podemos permitirnos destinar a explotación algunas de las evaluaciones
+	 que ahora se usan para exploración.
+	\item En las últimas iteraciones, el error de la mejor solución estaba decreciendo de forma continua en lugar de escalonada, por lo que
+	 parece que es la Búsqueda Local la que estaba logrando tal mejora. Da la impresión de que las evaluaciones se agotan demasiado pronto y
+	 que podría mejorar aun más si se invirtiesen más evaluaciones en la Búsqueda Local.
+	\item Es cierto que en la mayoría de ejecuciones (no todas) de F6 y F8 se alcanza la mejor solución demasiado pronto. Sin embargo, como
+	nuestra metahurística lanza múltiples trayectorias, incrementar la componente de intensificación podría hacer que esa mejor solución en la
+	 que nos quedamos ``atascados'' (no conseguimos superar) presentase mejor fitness.
+\end{enumerate}
+
+\subsection{Resultados del benchmark}
 
 TODO: ajustar parámetros y funciones, por ejemplo el x -> x(1+x) puede acercarse demasiado a 1
 
@@ -699,7 +851,7 @@ Sin embargo, durante el diseño de la metaheurística concreta he tenido que afr
 Por si fuese poco, cuando le he dado respuesta (no necesariamente buena) a estas cuestiones, han aparecido innumerables parámetros cuyos
 valores tenía que decidir (todos los de la Tabla \ref{tab:parametros} y los dos para decidir cuándo aplicar Solis Wets al hibridar).
 
-En resumen, me he dado cuenta que no basta con tener una buena idea general, sino que hay que saber dar forma matemática a la intución,
+En resumen, me he dado cuenta que no basta con tener una buena idea general, sino que además hay que saber dar forma matemática a la intución,
 algo que he sufrido y disfrutado.
 
 \end{document}
