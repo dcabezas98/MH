@@ -107,21 +107,22 @@ void soliswets(vector<double> &sol, double &fitness, double delta, int maxevals,
 }
 
 int main() {
-  vector<double> sol;
-  int dim = 10;
-  int seed = 42;
   std::uniform_real_distribution<> dis(-100.0, 100.0);
-  
-  for (int funcid = 1; funcid <= 30; funcid++) {
-    vector<double> sol(dim);
+  //int dim = 30;
+  for(int dim=10; dim<=30; dim+=20) {
+    //int seed = 42;
+    for (int seed=42; seed<=87; seed+=5){
+      //int funcid = 4;
+      for (int funcid = 1; funcid <= 30; funcid++) {
+        vector<double> sol(dim);
     vector<double> bestsol(dim);
     const size_t maxtimes = 5;
     double fitness, bestfitness = -1;
 
     cec17_init("solis", funcid, dim);
 
-    cerr <<"Warning: output by console, if you want to create the output file you have to comment cec17_print_output()" <<endl;
-    cec17_print_output(); // Comment to generate the output file
+    //cerr <<"Warning: output by console, if you want to create the output file you have to comment cec17_print_output()" <<endl;
+    //cec17_print_output(); // Comment to generate the output file
 
     std::mt19937 gen(seed); // Inicio semilla
 
@@ -137,8 +138,10 @@ int main() {
         bestfitness = fitness;
       }
     }
-    cout <<"Best Random[F" <<funcid <<"]: " << scientific <<cec17_error(bestfitness) <<endl;
+    //cout <<"Best Random[F" <<funcid <<"]: " << scientific <<cec17_error(bestfitness) <<endl;
+        cout << "ID: " << funcid << "\tSEED: " << seed << endl;
+      }
+    }
   }
-
   return 0;
 }

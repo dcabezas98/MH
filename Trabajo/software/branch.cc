@@ -8,7 +8,7 @@ extern "C" {
 
 using namespace std;
 
-int TOTAL_EVALS=0;
+//int TOTAL_EVALS=0;
 
 // Parámetros
 float INIT_CELERITY = 1;
@@ -65,8 +65,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 
   double fitness = cec17_fitness(&sol[0]);
   evals--;
-  TOTAL_EVALS++;
-  if(fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(fitness) << endl;
+  //TOTAL_EVALS++;
+  //if(fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(fitness) << endl;
   best=min(best, fitness);
 
   while(evals>0){
@@ -109,10 +109,10 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
         clip(neighbor);
         neighbor_fitness=cec17_fitness(&neighbor[0]);
         evals--;
-        TOTAL_EVALS++;
+        //TOTAL_EVALS++;
         if(neighbor_fitness<fitness){
           carryon=false;
-          if(neighbor_fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(neighbor_fitness) << endl;
+        //  if(neighbor_fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(neighbor_fitness) << endl;
           best=min(best, neighbor_fitness);
         }
       }
@@ -129,8 +129,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
         clip(sol);
         fitness=fitness = cec17_fitness(&sol[0]);
         evals--;
-        TOTAL_EVALS++;
-        if(fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(fitness) << endl;
+        //TOTAL_EVALS++;
+        //if(fitness < best) cout << TOTAL_EVALS << ", " << cec17_error(fitness) << endl;
         best=min(best, fitness);
 
         cel = DECREASE_SUCCESS*cel;
@@ -145,11 +145,11 @@ int main(int argc, char *argv[]) {
   std::uniform_real_distribution<> range(-100.0, 100.0);
 
   int dim = 30;
-  //for(int dim=10; dim<=30; dim+=20) {
-    int seed = stoi(argv[2]);
-    //for (int seed=42; seed<=87; seed+=5){
-      int funcid = stoi(argv[1]);
-      //for (int funcid = 1; funcid <= 30; funcid++) {
+  for(int dim=10; dim<=30; dim+=20) {
+    //int seed = stoi(argv[2]); //42;
+    for (int seed=42; seed<=87; seed+=5){
+      //int funcid = stoi(argv[1]); //4;
+      for (int funcid = 1; funcid <= 30; funcid++) {
         vector<double> sol(dim);
         vector<double> mom(dim); // Momento
         double fitness;
@@ -179,8 +179,8 @@ int main(int argc, char *argv[]) {
 
           branchSearch(sol, mom, INIT_CELERITY, e, gen);
         }
-      //}
-    //}
-  //}
+      }
+    }
+  }
 
 }
