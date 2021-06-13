@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named hybrid2
+
+# Build rule for target.
+hybrid2: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 hybrid2
+.PHONY : hybrid2
+
+# fast build rule for target.
+hybrid2/fast:
+	$(MAKE) -f CMakeFiles/hybrid2.dir/build.make CMakeFiles/hybrid2.dir/build
+.PHONY : hybrid2/fast
+
+#=============================================================================
 # Target rules for targets named hybrid
 
 # Build rule for target.
@@ -296,6 +309,33 @@ hybrid.cc.s:
 	$(MAKE) -f CMakeFiles/hybrid.dir/build.make CMakeFiles/hybrid.dir/hybrid.cc.s
 .PHONY : hybrid.cc.s
 
+hybrid2.o: hybrid2.cc.o
+
+.PHONY : hybrid2.o
+
+# target to build an object file
+hybrid2.cc.o:
+	$(MAKE) -f CMakeFiles/hybrid2.dir/build.make CMakeFiles/hybrid2.dir/hybrid2.cc.o
+.PHONY : hybrid2.cc.o
+
+hybrid2.i: hybrid2.cc.i
+
+.PHONY : hybrid2.i
+
+# target to preprocess a source file
+hybrid2.cc.i:
+	$(MAKE) -f CMakeFiles/hybrid2.dir/build.make CMakeFiles/hybrid2.dir/hybrid2.cc.i
+.PHONY : hybrid2.cc.i
+
+hybrid2.s: hybrid2.cc.s
+
+.PHONY : hybrid2.s
+
+# target to generate assembly for a file
+hybrid2.cc.s:
+	$(MAKE) -f CMakeFiles/hybrid2.dir/build.make CMakeFiles/hybrid2.dir/hybrid2.cc.s
+.PHONY : hybrid2.cc.s
+
 test.o: test.cc.o
 
 .PHONY : test.o
@@ -384,6 +424,7 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
+	@echo "... hybrid2"
 	@echo "... hybrid"
 	@echo "... branch"
 	@echo "... testsolis"
@@ -403,6 +444,9 @@ help:
 	@echo "... hybrid.o"
 	@echo "... hybrid.i"
 	@echo "... hybrid.s"
+	@echo "... hybrid2.o"
+	@echo "... hybrid2.i"
+	@echo "... hybrid2.s"
 	@echo "... test.o"
 	@echo "... test.i"
 	@echo "... test.s"

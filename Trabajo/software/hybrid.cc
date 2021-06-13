@@ -252,8 +252,8 @@ void branchSearch(vector<double> &sol, vector<double> &mom, float cel, int evals
 int main(int argc, char *argv[]) { 
   std::uniform_real_distribution<> range(-100.0, 100.0);
 
-  int dim = 30;
-  for(int dim=10; dim<=30; dim+=20) {
+  int dim = 10;
+  //for(int dim=10; dim<=30; dim+=20) {
     //int seed = stoi(argv[2]); //42;
     for (int seed=42; seed<=87; seed+=5){
       //int funcid = stoi(argv[1]); //4;
@@ -289,6 +289,6 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-  }
+  //}
 
 }

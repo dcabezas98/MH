@@ -1,0 +1,1 @@
+/usr/bin/c++    -rdynamic CMakeFiles/hybrid2.dir/hybrid2.cc.o  -o hybrid2  -Wl,-rpath,/home/dcabezas/git/MH/Trabajo/software libcec17_test_func.so 
