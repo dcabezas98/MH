@@ -1032,20 +1032,45 @@ Si nos fijamos en la Tabla \ref{tab:comp-hybrid-30} podemos observar que las mej
  empeoramientos. Las mejoras más importantes se han logrado en las funciones F13, F14, F15, F18, F19 y F30, mientras que los
  mayores empeoramientos ocurren en F2 (donde ninguno de nuestros intentos ha logrado resultados mínimamente decentes), F3, F12, F26
  y F27. Hay muchos empeoramientos muy bajos, como en F6, F25 y F28. La excepción es F2, pero en esta función todos nuestros intentos
- obtienen errores muy altos.
+ obtienen errores muy altos. Esto sumado a que mejora a los algoritmos de referencia en más ocasiones nos sugiere que para
+ dimensión 30 no ha sido
+ una mala idea modificar el parámetro para aumentar la intensificación.
 
 \subsection{Otras posibles mejoras}
 
 Comentaremos otras posibles mejoras que podríamos intentar si dispusiésemos de más tiempo.
 
-TODO: ajustar parámetros y funciones, por ejemplo el x -> x(1+x) puede acercarse demasiado a 1
+Obviamente, el ajuste de parámetros podría ser más preciso y teniendo en cuenta más información. También correríamos el riesgo
+de ``sobreajustar'' la meteheurística para este benchmark, y que su desempeño sobre otros problemas de optimización continua no
+fuese el esperado. Pero sin duda podríamos haber invertido más tiempo en razonar los valores de los parámetros incluso sin atender
+a los resultados de las ejecuciones.
 
-En lugar de partir de un momento aleatorio, construir el vector momento a partir de algunas iteraciones de Búsqueda Local. Esto evita
-el mayor consumo de evaluaciones extra en las primeras etapas que comentamos previamente. 
+Las transformaciones que aplicamos también podrían ajustarse. Por ejemplo cuando queremos convertir un valor no acotado (a priori)
+en la escala $[0,1]$, la transformación $x\mapsto \dfrac{x}{1+x}$ produce valores muy cercanos a 1 si $x$ toma valores grandes.
+Podría intentarse $x\mapsto \dfrac{x}{M+x}$ para algún real positivo $M$ más grande.
+
+Además, se podrían estudiar otras alternativas a las decisiones que tomamos durante el diseño de la metaheurística, como la decisión
+de la acción a realizar en cada iteración (las condiciones de los \emph{if}).
+
+También comentamos que utilizar momentos requería una evaluación extra en cada actualización, ya que aparte de los vecinos hay que
+evaluar la solución a la que saltamos realmente. Esto no supone ninguna diferencia cuando la solución ya es medianamente decente
+(cada salto puede requerir evaluar muchos vecinos), pero sí en las primeras etapas, cuando se salta tras evaluar menos de 10 vecinos.
+
+Una alternativa para solucionar este pequeño problema sería la siguiente: En lugar de partir de un momento aleatorio, construir el
+ vector momento a partir de algunas iteraciones de Búsqueda Local. Además, el nuevo momento tiene más posibilidades de enviar a la
+ solución en una dirección adecuada. Por el contrario, estamos sacrificando exploración para conseguir una mayor intensificación,
+ lo que puede acarrear convergencia prematura.
 
 \section{Conclusiones}
 
 \subsection{Valoración de la meteheurística}
+
+Tras realizar varios experimentos y razonar bastantes decisiones, hemos convertido una simple idea en una metaheurística
+funcional. Como era de esperar, nuestra metaheurística no logra igualar a los algoritmos de la competición. Sin embargo, en
+dimensión 30, hemos conseguido a hacerle sombra a PSO y a AEO (Tabla \ref{tab:hybrid2-30}), por lo que podemos estar satisfechos
+con nuestro trabajo.
+
+Además, es seguro que nuestra idea de utilizar momentos tenga mucho más potencial del que hemos conseguido extraerle.
 
 \subsection{Mi experiencia diseñando una metaheurística}
 
