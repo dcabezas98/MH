@@ -1,0 +1,183 @@
+\documentclass[serif,9pt]{beamer}
+\usetheme{tree}
+%\usepackage{german}
+\usepackage[latin1]{inputenc}
+\usepackage[spanish]{babel}
+
+\usepackage{parskip}
+
+% Images
+\usepackage{graphicx}
+\usepackage{subfigure} % subfiguras
+\usepackage{caption}
+\usepackage{float}
+\captionsetup[table]{labelformat=empty}
+\captionsetup[figure]{labelformat=empty}
+
+\usepackage{amsmath}
+
+\usepackage{listings}
+\lstset
+{ %Formatting for code in appendix
+  language=C++, % choose the language of the code
+  basicstyle=\fontfamily{pcr}\selectfont\footnotesize\color{black},
+  keywordstyle=\color{darkorange}\bfseries, % style for keywords
+  numbers=left, % where to put the line-numbers
+  numberstyle=\tiny, % the size of the fonts that are used for the line-numbers     
+  backgroundcolor=\color{white},
+  showspaces=false, % show spaces adding particular underscores
+  showstringspaces=false, % underline spaces within strings
+  showtabs=false, % show tabs within strings adding particular underscores
+  tabsize=2, % sets default tabsize to 2 spaces
+  captionpos=b, % sets the caption-position to bottom
+  breaklines=false, % sets automatic line breaking
+  breakatwhitespace=false, 
+}
+
+\AtBeginSection[]
+{
+  \begin{frame}<beamer>{Contenido}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
+
+\definecolor{darkorange}{rgb}{0.94,0.4,0.0}
+
+\usepackage[ruled,vlined]{algorithm2e}
+\SetKwInOut{Parameter}{parameter}
+\newcommand{\Or}{\textbf{ or }}
+\renewcommand{\And}{\textbf{ and }}
+
+\begin{document}
+\setbeamertemplate{navigation symbols}{}
+
+\title{Práctica Alternativa al Examen: \\ Búsqueda Ramificada con Momentos}  
+\author{David Cabezas Berrido}
+\date{}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}\frametitle{Índice}\tableofcontents
+\end{frame}
+
+\section{Introducción}
+
+\subsection{Inspiración}
+\begin{frame}\frametitle{Inspiración}
+	Diseñaremos una metahurística inspirándonos en un fenómeno físico, la conservación del momento lineal o del movimiento.
+	
+	\vspace{5mm}
+	
+	Cuando un objeto se desprende de otro que se está moviendo, conserva su momento. Por ejemplo, esto se manifiesta cuando un
+	 paracaidista salta de un avión o se desprenden fragmentos de un meteorito.
+\end{frame}
+
+\subsection{Idea general}
+\begin{frame}\frametitle{Idea general}
+\begin{itemize}\setlength\itemsep{4mm}
+	\item Nuestra metaheurística, \textbf{Búsqueda Ramificada con Momentos}, pretende ``lanzar'' soluciones que se muevan por el espacio.
+	\item Cada
+	solución tendrá asociado un vector velocidad (momento), que determina la dirección en la que se mueve.
+	\item Las soluciones se ramifican
+	o dividen en otras de
+	forma que las soluciones resultantes conserven la inercia de la solución de la que partieron.
+	\item Necesitamos definir un algoritmo de trayectoria para las soluciones que le dé sentido al momento.
+\end{itemize}
+\end{frame}
+
+\section{Descripción de la Metaheurística}
+
+\subsection{Resumen}
+
+\begin{frame}\frametitle{Resumen}
+	Cada solución $S$ cuenta con un impulso $\lambda\in\mathbb{R}^+$ y un vector momento $\mu$. En cada iteración hace una de
+	las siguientes acciones.
+	
+	\vspace{3mm}
+	
+	\begin{itemize}\setlength\itemsep{3mm}
+		\item La solución desaparece, es truncada.
+		\item La solución se divide en dos, que ´´saldrán disparadas'' en direcciones opuestas. Las soluciones generadas conservan
+		la inercia de la original.
+		\item La solución se ``desvía'' hacia un vecino con mejor fitness y luego se actualiza usando su momento. La regla es:
+		$S\gets S+\lambda\nu$. La solución pierde cierta cantidad de impulso.
+	\end{itemize}
+\end{frame}
+
+\subsection{Decisión de la acción}
+
+\begin{frame}\frametitle{Acción a realizar}
+	\begin{itemize}\setlength\itemsep{3mm}
+		\item Queremos truncar soluciones con escasas opciones de superar a la mejor encontrada hasta el momento. Truncaremos
+		cuando la diferencia
+		de fitness sea alta y el impulso bajo o queden pocas evaluaciones por hacer.
+		\item Queremos ramificar soluciones prometedoras, pero queremos que exista variedad entre las soluciones. Dividiremos
+		soluciones con diferencia de fitness baja y número de evaluaciones suficiente para que las soluciones generadas puedan
+		 prosperar. Conviene
+		dejar que las soluciones resultantes de una ramificación se separen antes de volver a ramificarlas, no queremos ramificar
+		ni muy pronto (poca variedad) ni muy tarde (pocas evaluaciones restantes).
+		\item En la mayoría de ocasiones, la solución se limita a avanzar.
+	\end{itemize}
+
+	\vspace{2mm}
+	
+	No hay una mejor forma de concretar estas ideas. A continuación ofrecemos nuestra implementación.
+\end{frame}
+
+\begingroup
+\small
+\begin{frame}[fragile]
+ \begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\KwIn{Una solución: vector de flotantes $S$}
+	\KwIn{Su momento: vector de flotantes $\mu$}
+	\KwIn{Su impulso: escalar positivo $\lambda$}
+	\KwIn{Evaluaciones a realizar: entero positivo $evals$}
+	$fitness\gets \operatorname{eval}(S)$ \tcp*{Supondremos la función de evaluación siempre disponible}
+	$evals\gets evals-1$\;
+	$best\gets\operatorname{min}(best, fitness)$\;
+	\While{$evals>0$}{
+		$D\gets fitness-best$ \tcp*{Suponemos accesible la mejor fitness obtenida hasta el momento}
+		$\hat{D}\gets \frac{D}{1+D}$ \tcp*{Diferencia normalizada en $[0,1[$}
+		$p\gets U[0,1]$ \tcp*{Flotante aleatorio en $[0,1]$, elegido según la distribución uniforme}
+		\If{$(p<P_{vanish}\frac{\hat{D}}{\lambda} \And evals\leq MaxEvalsTruncate) \Or \lambda < MinImpulse$}{
+			\text{La solución es truncada.}
+		}
+		\ElseIf{$p>P_{split}\frac{\hat{D}}{\lambda} \And MinImpulseSplit\leq\lambda\leq MaxImpulseSplit \And evals\geq MinEvalsSplit$}{
+			\text{La solución se divide en dos.}
+		}
+		\Else{La solución avanza.}
+	}
+	\caption{{\sc Branch:} Búsqueda Ramificada: Bucle Principal.}
+	\label{alg:branch}
+\end{algorithm}
+\end{frame}
+\endgroup
+
+\subsection{Truncamiento de la solución}
+
+\begin{frame}\frametitle{Truncamiento}
+
+Truncamos la solución con un simple \textbf{break} para el bucle.
+
+\vspace{5mm}
+
+Acumulamos las evaluaciones restantes para que no se
+desperdicien:
+
+\[spareEvals\gets spareEvals+evals\]
+\end{frame}
+
+\subsection{Ramificación de la solución}
+
+\begin{frame}\frametitle{Ramificación}
+	
+\end{frame}
+
+\subsection{Avance de la solución}
+
+\subsection{Invocación del algoritmo} % TODO: trayectoria múltiple
+
+\end{document}

@@ -86,13 +86,14 @@ de soluciones.
 \subsection{Idea general}
 Nuestra metaheurística, \textbf{Búsqueda Ramificada con Momentos}, pretende ``lanzar'' soluciones que se muevan por el espacio como lo harían bombas
 lanzadas desde un avión bombardeos, fragmentos que se desprenden de un cuerpo celeste o el despliegue de una sonda de una nave espacial.
-Es decir, se explora el espacio ramificando o dividiendo las soluciones en otras, de
+Es decir, se explora el espacio ramificando o dividiendo las soluciones en otras de
 forma que las soluciones resultantes conserven la inercia de la solución de la que partieron.
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=140mm]{imgs/bombs}
-	\caption{Cuando se despliegan bombas desde un avión, las bombas mantienen la inercia del movimiento del avión.}
+	\caption{Cuando se despliegan bombas desde un avión, las bombas mantienen la inercia del movimiento del avión. \\
+	Fuente: \href{https://aoav.org.uk/wp-content/uploads/2013/07/B-1B-Lancer-unleashes-cluster-munitions.jpg}{https://aoav.org.uk/wp-content/uploads/2013/07/B-1B-Lancer-unleashes-cluster-munitions.jpg}.}
 \end{figure}
 
 Para dar sentido a este fenómeno físico que es la conservación de la inercia ideamos una estrategia de explotación basada en momentos, similar
@@ -132,7 +133,7 @@ Decidimos truncar la solución cuando esta diferencia sea alta y
 las posibilidades de mejorarla sean escasas, ya sea por que la solución tenga pocas evaluaciones restantes o porque su impulso sea bajo.
 
 Decidimos ramificar la solución en dos cuando esta diferencia sea baja, el impulso esté en un rango determinado (no queremos dividir ni muy pronto ni
-muy tarde) y el número de evaluaciones restantes sea suficiente para que las soluciones resultantes puedan mejorar.
+muy tarde) y el número de evaluaciones restantes sea suficiente para que las soluciones resultantes puedan prosperar.
 
 En el resto de casos, la solución se limita a avanzar.
 
