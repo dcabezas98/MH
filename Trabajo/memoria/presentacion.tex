@@ -11,10 +11,19 @@
 \usepackage{subfigure} % subfiguras
 \usepackage{caption}
 \usepackage{float}
-\captionsetup[table]{labelformat=empty}
-\captionsetup[figure]{labelformat=empty}
+%\captionsetup[table]{labelformat=empty}
+%\captionsetup[figure]{labelformat=empty}
 
 \usepackage{amsmath}
+
+\hypersetup{bookmarks=true,
+	bookmarksnumbered=false, % true means bookmarks in 
+	% left window are numbered
+	bookmarksopen=false,     % true means only level 1
+	% are displayed.
+	colorlinks=true,
+	allcolors=blue,
+	urlcolor=blue}
 
 \usepackage{listings}
 \lstset
@@ -92,17 +101,18 @@
 \subsection{Resumen}
 
 \begin{frame}\frametitle{Resumen}
-	Cada solución $S$ cuenta con un impulso $\lambda\in\mathbb{R}^+$ y un vector momento $\mu$. En cada iteración hace una de
+	Cada solución $S$ cuenta con un impulso $\lambda\in\mathbb{R}^+$, un vector momento $\mu$ y un número de evaluaciones
+	restantes $evals$. En cada iteración hace una de
 	las siguientes acciones.
 	
 	\vspace{3mm}
 	
 	\begin{itemize}\setlength\itemsep{3mm}
 		\item La solución desaparece, es truncada.
-		\item La solución se divide en dos, que ´´saldrán disparadas'' en direcciones opuestas. Las soluciones generadas conservan
+		\item La solución se divide en dos, que ``saldrán disparadas'' en direcciones opuestas. Las soluciones generadas conservan
 		la inercia de la original.
 		\item La solución se ``desvía'' hacia un vecino con mejor fitness y luego se actualiza usando su momento. La regla es:
-		$S\gets S+\lambda\nu$. La solución pierde cierta cantidad de impulso.
+		$S\gets S+\lambda\mu$. La solución pierde cierta cantidad de impulso.
 	\end{itemize}
 \end{frame}
 
@@ -145,7 +155,7 @@
 		\If{$(p<P_{vanish}\frac{\hat{D}}{\lambda} \And evals\leq MaxEvalsTruncate) \Or \lambda < MinImpulse$}{
 			\text{La solución es truncada.}
 		}
-		\ElseIf{$p>P_{split}\frac{\hat{D}}{\lambda} \And MinImpulseSplit\leq\lambda\leq MaxImpulseSplit \And evals\geq MinEvalsSplit$}{
+		\ElseIf{$p>P_{split}\frac{\hat{D}}{\lambda} \And MinImpulseSplit\leq\lambda\leq MaxImpulseSplit$ \\ $\And evals\geq MinEvalsSplit$}{
 			\text{La solución se divide en dos.}
 		}
 		\Else{La solución avanza.}
@@ -173,11 +183,151 @@ desperdicien:
 \subsection{Ramificación de la solución}
 
 \begin{frame}\frametitle{Ramificación}
-	
+	\begin{itemize}\setlength\itemsep{3mm}
+		\item 	Se generan dos soluciones con empujes opuestos desde $S$ y se acumulan los momentos: $\mu_1=\mu+M$, $\mu_2=\mu-M$, donde
+		$M$ es el empuje.
+		\item Los impulsos se recargan en cierta proporción del impulso perdido desde el inicial ($\lambda_0$):
+		$\lambda_1=\lambda_2=\lambda+SplitImpulse\cdot(\lambda_0-\lambda)$.
+		\item En la mayoría de ocasiones, la solución se limita a avanzar.
+		\item Las evaluaciones pendientes se reparten equitativamente
+		entre las dos soluciones generadas. Se rescata la evaluación sobrante en caso de que el número de evaluaciones
+		sea impar.
+		\item La solución es destruida, ya que se queda sin evaluaciones.
+	\end{itemize}
 \end{frame}
+
+\begingroup
+%\small
+\begin{frame}[fragile]
+	\begin{algorithm}[H]
+		\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+		$modification\gets\text{vector aleatorio, componentes según una $U[0,1]$}$\;
+		$\mu_1\gets \mu + modification$ \tcp*{Las soluciones salen en direcciones opuestas}
+		$\mu_2\gets \mu - modification$\;
+		$\lambda_1\gets \lambda+SplitImpulse\cdot(\lambda_0-\lambda)$ \tcp*{Se recarga parcialmente el impulso}
+		$\lambda_2\gets \lambda+SplitImpulse\cdot(\lambda_0-\lambda)$\;
+		$S_1 \gets S+\lambda_1 \mu_1$\;
+		$S_2 \gets S+\lambda_2 \mu_2$\;
+		$\operatorname{clip}(S_1)$ \tcp*{Si alguna componente se sale del rango, se fija en el borde}
+		$\operatorname{clip}(S_2)$\;
+		\If{$evals \% 2 = 1$}{
+			$spareEvals\gets spareEvals+1$ \tcp*{Para evitar perder evaluaciones}
+		}
+		$\operatorname{branch}(S_1, \mu_1, \lambda_1, evals/2)$\;
+		$\operatorname{branch}(S_2, \mu_2, \lambda_2, evals/2)$\;
+		\textbf{break} \tcp*{Esta solución desaparece}
+		\caption{{\sc Split:} Ramificación de una solución $S$ como la de entrada de BRANCH.}
+		\label{alg:split}
+	\end{algorithm}
+\end{frame}
+\endgroup
 
 \subsection{Avance de la solución}
 
-\subsection{Invocación del algoritmo} % TODO: trayectoria múltiple
+\begin{frame}\frametitle{Avance}
+	\begin{itemize}\setlength\itemsep{2mm}
+		\item Se buscan vecinos aleatorios en un entorno de la solución. En nuestro caso hemos elegido radio $\sqrt{\lambda}$.
+		\item Si se encuentra un vecino mejor en un determinado número de intentos, éxito. De lo contrario, fracaso.	
+	\end{itemize}
+\vspace{2mm}
+	En caso de éxito:
+	\begin{itemize}\setlength\itemsep{1mm}
+		\item Se modifica el momento de la solución desviándolo (más o menos, según la mejora) hacia la dirección del vecino.
+		\item Se desplaza la solución usando el momento y el impulso: $S\gets S+\lambda\mu$.
+		\item Se reduce ligeramente el impulso.
+	\end{itemize}
+\vspace{2mm}
+	En caso de fracaso (posible máximo local):
+		\begin{itemize}\setlength\itemsep{1mm}
+		\item Se reduce moderadamente el impulso.
+	\end{itemize}
+\end{frame}
+
+\begingroup
+\small
+\begin{frame}[fragile]
+ \begin{algorithm}[H]
+	\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+	\While{no se encuentre un vecino mejor\And no se excedan $ImproveLimit$ intentos\And $evals>0$}
+	{
+		$modification\gets\text{vector aleatorio, componentes según una $U[-\sqrt{\lambda},\sqrt{\lambda}]$}$\;
+		$S'\gets S+modification$ \tcp*{Vecino aleatorio}
+		$\operatorname{clip}(S')$\;
+		$neighbor\_fitness\gets \operatorname{eval}(S')$\;
+		$evals\gets evals-1$\;
+	}
+	\If{el vecino $S'$ mejora la fitness de $S$}{
+		$best\gets\operatorname{min}(best, neighbor\_fitness)$\;
+		$D\gets fitness - neighbor\_fitness$\;
+		$\hat{D}\gets \frac{D}{1+D}$ \tcp*{Mejora normalizada en $[0,1[$}
+		$neighbor\_weight\gets BaseWeight+(1-BaseWeight)\cdot \hat{D}$\;
+		$\mu\gets(1-neighbor\_weight)\mu+neighbor\_weight\cdot modification$ \tcp*{Se desvía la inercia de la solución hacia el vecino mejor}
+		$S\gets S+\lambda\mu$\tcp*{La solución se desplaza en su dirección}
+		$\operatorname{clip}(S)$\;
+		$fitness\gets \operatorname{eval}(S)$\;
+		$evals\gets evals-1$\;
+		$best\gets\operatorname{min}(best, fitness)$\;
+		$\lambda\gets DecreaseSuccess\cdot \lambda$ \tcp*{Éxito: se reduce ligeramente el impulso}
+	}
+	\Else{$\lambda\gets DecreaseFail\cdot \lambda$\tcp*{Fracaso: se reduce moderadamente el impulso}}
+	\caption{{\sc Advance:} Avance de la solución $S$.}
+	\label{alg:advance}
+\end{algorithm}
+\end{frame}
+\endgroup
+
+\subsection{Invocación del algoritmo}
+
+\begingroup
+%\small
+\begin{frame}[fragile]\frametitle{Invocación del algoritmo}
+	Aplicamos el algoritmo como una búsqueda de trayectoria múltiple.
+	
+	\vspace{3mm}
+	
+	\begin{algorithm}[H]
+		\DontPrintSemicolon % Some LaTeX compilers require you to use \dontprintsemicolon instead
+		$best\gets\text{un valor mayor que cualquier posible evaluación}$\;
+		$spareEvals\gets 10000\cdot\text{dimensión del espacio de soluciones}$\;
+		\While{$spareEvals>0$}{
+			$evals\gets spareEvals$\;
+			$spareEvals\gets 0$\;
+			$S\gets\text{vector aleatorio, componentes según una $U[-100,100]$}$\;
+			$\mu\gets\text{vector aleatorio, componentes según una $U[-1,1]$}$\;
+			$\operatorname{branch}(S, \mu, \lambda_0, evals)$ \tcp*{$spareEvals$ puede verse incrementada durante la ejecución}
+		}
+		\caption{{\sc Main:} Llamadas sucesivas al algoritmo de búsqueda Ramificada con Momentos hasta consumir todas las evaluaciones
+			disponibles.}
+		\label{alg:main}
+	\end{algorithm}
+\end{frame}
+\endgroup
+
+\section{Valor de los parámetros}
+
+\begingroup
+%\small
+\begin{frame}[fragile]\frametitle{Valor de los parámetros en nuestra experimentación}
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|l|l|l|c|}
+			\hline
+			\textbf{Parámetro} & \textbf{Tipo / Rango}  & \textbf{Valor} \\ \hline
+			$\lambda_0$ & Real & 1 \\ \hline
+			$MaxEvalsTruncate$ & \begin{tabular}{l} Entero menor \\ que $10000\cdot\text{dim}$ \end{tabular}  &  $1200\cdot\text{dim}$   \\ \hline
+			$MinImpulse$ & Real menor que $\lambda_0$ & $0.01\cdot\lambda_0$  \\ \hline
+			$MinImpulseSplit$&  Real menor que $\lambda_0$  &  $0.1\cdot\lambda_0$  \\ \hline
+			$MaxImpulseSplit$ & \begin{tabular}{l} Real en \\ $]MinImpulseSplit,\lambda_0[$ \end{tabular} &  $0.7\cdot\lambda_0$  \\ \hline
+			$MinEvalsSplit$	& \begin{tabular}{l} Entero menor \\ que $10000\cdot\text{dim}$ \end{tabular} &  $400\cdot\text{dim}$              \\ \hline
+			$SplitImpulse$	&  Proporción (real en [0,1]) &  0.5   \\ \hline
+			$ImproveLimit$ & \begin{tabular}{l} Entero menor \\ que $10000\cdot\text{dim}$ \end{tabular} &  $10\cdot\text{dim}$ \\ \hline
+			$BaseWeight$ & Proporción en $[0,1[$ & 0.2 \\ \hline
+			$DecreaseSuccess$ & Proporción en $]0,1[$ & 0.99 \\ \hline
+			$DecreaseFail$ & \begin{tabular}{l} Proporción en \\ $]0,DecreaseSuccess[$\end{tabular}&  0.9 \\ \hline
+		\end{tabular}
+		\label{tab:parametros}
+	\end{table}
+\end{frame}
+\endgroup
 
 \end{document}

@@ -105,15 +105,15 @@ condiciones, así que se van lanzando nuevas soluciones desde puntos aleatorios 
 \subsection{Explicación del algoritmo}
 
 El algoritmo comienza con una solución aleatoria, un vector aleatorio de flotantes, $S$. Cada solución tiene asociado otro vector aleatorio que es
-su momento, $\nu$, que intuitivamente se puede interpretar como la dirección en la que se está moviendo la solución actualmente; también tiene un
+su momento, $\mu$, que intuitivamente se puede interpretar como la dirección en la que se está moviendo la solución actualmente; también tiene un
 valor escalar positivo, $\lambda$ que podría interpretarse como un impulso, la solución se desplaza usando su momento y su impulso:
-$S\gets S+\lambda\nu$.
+$S\gets S+\lambda\mu$.
 
 Cada solución tiene un número determinado de evaluaciones. En cada iteración, una solución puede hacer una de las siguientes acciones:
 \begin{itemize}
 	\item La solución desaparece, es truncada.
 	\item La solución se divide en dos, que ``saldrán disparadas'' en direcciones opuestas.
-	\item La solución desvía su dirección hacia un vecino del entorno con mejor fitness y luego se actualiza usando su impulso y su momento: $S\gets S+\lambda\nu$. La solución pierde una cantidad de impulso determinada por el éxito de la búsqueda de un vecino mejor en el entorno.
+	\item La solución desvía su dirección hacia un vecino del entorno con mejor fitness y luego se actualiza usando su impulso y su momento: $S\gets S+\lambda\mu$. La solución pierde una cantidad de impulso determinada por el éxito de la búsqueda de un vecino mejor en el entorno.
 \end{itemize}
 La acción a realizar en cada momento depende de la fitness de la solución respecto a la mejor fitness encontrada hasta el momento, del número de evaluaciones restantes y del impulso que le quede a la solución. Queremos truncar soluciones que no tengan muchas posibilidades de mejorar, ya sea porque
 estén muy lejos de la mejor hasta el momento y les queden pocas iteraciones o porque su impulso sea prácticamente nulo. Queremos dividir soluciones
@@ -200,7 +200,7 @@ sea impar. La solución es destruida, ya que se queda sin evaluaciones.
 \end{algorithm}
 
 \subsubsection*{Avance de la solución}
-Para el avance de la solución se buscan vecinos aleatorios en un entorno de la solución, para mí siempre se tiene $\lambda\in]0,1]$ y he escogido radio $\sqrt{\lambda}$. Si se encuentra un vecino mejor en un determinado número de intentos, se considera un éxito y se
+Para el avance de la solución se buscan vecinos aleatorios en un entorno de la solución, en nuestro caso siempre se tiene $\lambda\in]0,1]$ y hemos escogido radio $\sqrt{\lambda}$. Si se encuentra un vecino mejor en un determinado número de intentos, se considera un éxito y se
 modifica el momento de la solución desviándolo hacia la dirección del vecino, la medida en la que se desvía depende de la mejora que
 aporte; después se desplaza la solución usando el momento y el impulso y se reduce el impulso ligeramente. Si se fracasa al encontrar
 un vecino mejor (se agotan los intentos) interpretamos que estamos en un máximo local (o se acabaron las evaluaciones) y se reduce más
